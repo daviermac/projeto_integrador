@@ -16,9 +16,15 @@ Um simples gerenciador de tarefas web desenvolvido em Python utilizando Flask e 
 
 ## Instalação
 
+### Dependências
+Certifique-se de que as seguintes dependências estão instaladas:
+- Flask
+- Flask-SQLAlchemy
+
+
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu-usuario/gerenciador-tarefas.git
+   git clone https://github.com/daviermac/projeto_integrador
    cd gerenciador-tarefas
    ```
 
@@ -30,6 +36,9 @@ Um simples gerenciador de tarefas web desenvolvido em Python utilizando Flask e 
 
 3. Instale as dependências:
    ```bash
+   pip install flask flask_sqlalchemy
+
+   ```bash
    pip install -r requirements.txt
    ```
 
@@ -40,12 +49,10 @@ Um simples gerenciador de tarefas web desenvolvido em Python utilizando Flask e 
 
 5. Acesse a aplicação no navegador:
    ```
-   http://localhost:5000
-   ```
+http://127.0.0.1:5000/   ```
 
 ## Controle de Versão
 
 Este projeto utiliza Git para controle de versão. Certifique-se de criar um repositório no GitHub e seguir as boas práticas de commits.
 
 ## Contribuição
-
