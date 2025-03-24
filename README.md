@@ -1,6 +1,6 @@
 # Gerenciador de Tarefas Web
 
-Um simples gerenciador de tarefas web desenvolvido em Python utilizando Flask e SQLite.
+Um simples gerenciador de tarefas web desenvolvido em Python utilizando Flask.
 
 ## Funcionalidades
 
@@ -21,7 +21,7 @@ Certifique-se de que as seguintes dependências estão instaladas:
 - Flask
 - Flask-SQLAlchemy
 
-
+### Comandos para Instalação
 1. Clone o repositório:
    ```bash
    git clone https://github.com/daviermac/projeto_integrador
@@ -31,13 +31,13 @@ Certifique-se de que as seguintes dependências estão instaladas:
 2. Crie e ative o ambiente virtual:
    ```bash
    python -m venv venv
-   source venv/bin/activate  # No Windows: venv\Scripts\activate
+   # No Windows:
+   venv\Scripts\activate
+   # No Linux ou macOS:
+   source venv/bin/activate
    ```
 
 3. Instale as dependências:
-   ```bash
-   pip install flask flask_sqlalchemy
-
    ```bash
    pip install -r requirements.txt
    ```
@@ -49,10 +49,10 @@ Certifique-se de que as seguintes dependências estão instaladas:
 
 5. Acesse a aplicação no navegador:
    ```
-http://127.0.0.1:5000/   ```
+   http://127.0.0.1:5000/
+   ```
 
 ## Controle de Versão
 
-Este projeto utiliza Git para controle de versão. Certifique-se de criar um repositório no GitHub e seguir as boas práticas de commits.
+Este projeto utiliza Git para controle de versão.
 
-## Contribuição
