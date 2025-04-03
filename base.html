@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="{{ current_user.tema if current_user.is_authenticated and hasattr(current_user, 'tema') else 'light' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,11 +13,56 @@
         .gradient-bg {
             background: linear-gradient(135deg, #0070bd 0%, #36aaf5 100%);
         }
+        
+        /* Modo escuro */
+        .dark {
+            color-scheme: dark;
+        }
+        
+        .dark body {
+            background-color: #111827;
+            color: #f3f4f6;
+        }
+        
+        .dark .bg-white {
+            background-color: #1f2937;
+        }
+        
+        .dark .text-gray-700, 
+        .dark .text-gray-800, 
+        .dark .text-gray-900 {
+            color: #f3f4f6;
+        }
+        
+        .dark .text-gray-500, 
+        .dark .text-gray-600 {
+            color: #d1d5db;
+        }
+        
+        .dark .border-gray-200,
+        .dark .border-gray-300 {
+            border-color: #374151;
+        }
+        
+        .dark .bg-gray-50,
+        .dark .bg-gray-100 {
+            background-color: #374151;
+        }
+        
+        .dark .shadow-sm,
+        .dark .shadow-md,
+        .dark .shadow-lg {
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .dark .bg-gradient-to-br {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+        }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
     {% if current_user.is_authenticated %}
-    <nav class="bg-white shadow-sm">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
@@ -26,8 +71,21 @@
                     </a>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span class="text-gray-700">Olá, {{ current_user.nome }}!</span>
-                    <a href="{{ url_for('logout') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition-colors">
+                    <span class="text-gray-700 dark:text-gray-300">Olá, {{ current_user.nome }}!</span>
+                    <form action="{{ url_for('alternar_tema') }}" method="POST" class="inline">
+                        <button type="submit" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full">
+                            {% if current_user.tema == 'dark' %}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            {% else %}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                </svg>
+                            {% endif %}
+                        </button>
+                    </form>
+                    <a href="{{ url_for('logout') }}" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full transition-colors">
                         Sair
                     </a>
                 </div>
@@ -40,7 +98,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                    <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200{% else %}bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200{% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -50,9 +108,9 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-white mt-12 py-6">
+    <footer class="bg-white dark:bg-gray-800 mt-12 py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-gray-500">
+            <p class="text-center text-gray-500 dark:text-gray-400">
                 © {{ current_year }} Gerenciador de Tarefas Escolares. Todos os direitos reservados.
             </p>
         </div>
