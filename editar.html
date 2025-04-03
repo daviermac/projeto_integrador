@@ -2,47 +2,70 @@
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
-    <div class="bg-white rounded-xl shadow-sm p-6">
-        <h1 class="text-2xl font-bold text-gray-900 mb-6">Editar Tarefa</h1>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-200 mb-6">Editar Tarefa</h1>
         
         <form method="POST" class="space-y-6">
             <div>
-                <label for="descricao" class="block text-sm font-medium text-gray-700">Descrição</label>
+                <label for="descricao" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descrição</label>
                 <input 
                     type="text" 
                     id="descricao" 
                     name="descricao" 
                     value="{{ tarefa.descricao }}" 
                     required 
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
             </div>
 
             <div>
-                <label for="categoria" class="block text-sm font-medium text-gray-700">Categoria</label>
+                <label for="categoria" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categoria</label>
                 <select 
                     id="categoria" 
                     name="categoria" 
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
                     <option value="">Selecione uma categoria</option>
                     <option value="escola" {% if tarefa.categoria == 'escola' %}selected{% endif %}>Escola</option>
                     <option value="trabalho" {% if tarefa.categoria == 'trabalho' %}selected{% endif %}>Trabalho</option>
                     <option value="pessoal" {% if tarefa.categoria == 'pessoal' %}selected{% endif %}>Pessoal</option>
+                    <option value="prova" {% if tarefa.categoria == 'prova' %}selected{% endif %}>Prova</option>
+                    <option value="projeto" {% if tarefa.categoria == 'projeto' %}selected{% endif %}>Projeto</option>
                 </select>
             </div>
 
             <div>
-                <label for="prioridade" class="block text-sm font-medium text-gray-700">Prioridade</label>
+                <label for="prioridade" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prioridade</label>
                 <select 
                     id="prioridade" 
                     name="prioridade" 
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
                     <option value="normal" {% if tarefa.prioridade == 'normal' %}selected{% endif %}>Normal</option>
                     <option value="baixa" {% if tarefa.prioridade == 'baixa' %}selected{% endif %}>Baixa</option>
                     <option value="alta" {% if tarefa.prioridade == 'alta' %}selected{% endif %}>Alta</option>
                 </select>
+            </div>
+            
+            <div>
+                <label for="data_vencimento" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data de Vencimento</label>
+                <input 
+                    type="date" 
+                    id="data_vencimento" 
+                    name="data_vencimento" 
+                    value="{{ tarefa.data_vencimento.strftime('%Y-%m-%d') if tarefa.data_vencimento else '' }}" 
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+            </div>
+            
+            <div>
+                <label for="notas" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notas Adicionais</label>
+                <textarea 
+                    id="notas" 
+                    name="notas" 
+                    rows="4" 
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >{{ tarefa.notas or '' }}</textarea>
             </div>
 
             <div class="flex gap-4">
@@ -54,7 +77,7 @@
                 </button>
                 <a 
                     href="{{ url_for('index') }}" 
-                    class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-center"
+                    class="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-center"
                 >
                     Cancelar
                 </a>
