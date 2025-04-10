@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block title %}Pomodoro - Gerenciador de Tarefas Escolares{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl shadow-lg p-6 mb-6 text-white">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Timer Pomodoro</h1>
+                <p class="text-blue-100">Gerencie seu tempo de estudo com a técnica Pomodoro</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a 
+                    href="{{ url_for('index') }}" 
+                    class="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Voltar para Tarefas
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Timer Pomodoro -->
+        <div class="md:col-span-2">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                <div class="flex flex-col items-center">
+                    <div class="mb-6 relative">
+                        <svg class="progress-ring" width="300" height="300">
+                            <circle class="progress-ring-circle-bg" stroke="#e5e7eb" stroke-width="8" fill="transparent" r="120" cx="150" cy="150"></circle>
+                            <circle id="progress-ring-circle" class="progress-ring-circle" stroke="#3b82f6" stroke-width="8" fill="transparent" r="120" cx="150" cy="150" stroke-dasharray="754" stroke-dashoffset="754"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center">
+                                <div id="timer-display" class="timer-display text-gray-800 dark:text-gray-200">25:00</div>
+                                <div id="timer-label" class="text-sm font-medium text-gray-500 dark:text-gray-400">Trabalho</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 mb-6">
+                        <button id="start-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                            Iniciar
+                        </button>
+                        <button id="pause-btn" class="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-colors hidden">
+                            Pausar
+                        </button>
+                        <button id="resume-btn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors hidden">
+                            Continuar
+                        </button>
+                        <button id="reset-btn" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">
+                            Reiniciar
+                        </button>
+                    </div>
+                    
+                    <div class="w-full max-w-md">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Ciclo:</span>
+                            <span id="cycle-display" class="text-sm font-medium text-gray-700 dark:text-gray-300">1/{{ config.ciclos }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                            <div id="cycle-progress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">Configurações</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="trabalho-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempo de Trabalho (minutos)</label>
+                            <input type="number" id="trabalho-time" min="1" max="60" value="{{ config.trabalho }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="pausa-curta-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pausa Curta (minutos)</label>
+                            <input type="number" id="pausa-curta-time" min="1" max="30" value="{{ config.pausa_curta }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="pausa-longa-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pausa Longa (minutos)</label>
+                            <input type="number" id="pausa-longa-time" min="1" max="60" value="{{ config.pausa_longa }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="ciclos-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ciclos até Pausa Longa</label>
+                            <input type="number" id="ciclos-count" min="1" max="10" value="{{ config.ciclos }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <button id="save-config-btn" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        Salvar Configurações
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tarefas Pendentes -->
+        <div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">Selecione uma Tarefa (opcional)</h3>
+                
+                <div class="mb-4">
+                    <label for="tarefa-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tarefa Atual</label>
+                    <select id="tarefa-select" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Nenhuma tarefa selecionada</option>
+                        {% for tarefa in tarefas %}
+                        <option value="{{ tarefa.id }}">{{ tarefa.descricao }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="space-y-4 mt-6">
+                    <h4 class="font-medium text-gray-700 dark:text-gray-300">Tarefas Pendentes</h4>
+                    
+                    {% if tarefas %}
+                    <div class="max-h-96 overflow-y-auto pr-2">
+                        {% for tarefa in tarefas %}
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mb-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors tarefa-item" data-id="{{ tarefa.id }}">
+                            <div class="flex justify-between items-start">
+                                <h5 class="font-medium text-gray-800 dark:text-gray-200">{{ tarefa.descricao }}</h5>
+                                <span class="px-2 py-1 text-xs rounded-full
+                                    {% if tarefa.prioridade == 'alta' %}
+                                        bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
+                                    {% elif tarefa.prioridade == 'baixa' %}
+                                        bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
+                                    {% else %}
+                                        bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200
+                                    {% endif %}
+                                ">
+                                    {{ tarefa.prioridade }}
+                                </span>
+                            </div>
+                            
+                            {% if tarefa.data_vencimento %}
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Vence em: {{ tarefa.data_vencimento.strftime('%d/%m/%Y') }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if tarefa.subtarefas %}
+                            <div class="mt-2">
+                                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                    <span>Progresso</span>
+                                    <span>{{ tarefa.progresso_subtarefas() }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
+                                    <div class="bg-blue-600 h-1.5 rounded-full" style="width: {{ tarefa.progresso_subtarefas() }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <p>Nenhuma tarefa pendente</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elementos do DOM
+        const timerDisplay = document.getElementById('timer-display');
+        const timerLabel = document.getElementById('timer-label');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const resumeBtn = document.getElementById('resume-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const cycleDisplay = document.getElementById('cycle-display');
+        const cycleProgress = document.getElementById('cycle-progress');
+        const progressRing = document.getElementById('progress-ring-circle');
+        const tarefaSelect = document.getElementById('tarefa-select');
+        
+        // Configurações
+        const trabalhoTimeInput = document.getElementById('trabalho-time');
+        const pausaCurtaTimeInput = document.getElementById('pausa-curta-time');
+        const pausaLongaTimeInput = document.getElementById('pausa-longa-time');
+        const ciclosCountInput = document.getElementById('ciclos-count');
+        const saveConfigBtn = document.getElementById('save-config-btn');
+        
+        // Variáveis do timer
+        let timer;
+        let timerRunning = false;
+        let timerPaused = false;
+        let currentMode = 'trabalho'; // trabalho, pausa_curta, pausa_longa
+        let currentCycle = 1;
+        let totalCycles = {{ config.ciclos }};
+        let timeLeft = {{ config.trabalho }} * 60; // em segundos
+        let totalTime = timeLeft;
+        let startTime;
+        let elapsedTime = 0;
+        
+        // Configurações do timer
+        let config = {
+            trabalho: {{ config.trabalho }},
+            pausa_curta: {{ config.pausa_curta }},
+            pausa_longa: {{ config.pausa_longa }},
+            ciclos: {{ config.ciclos }}
+        };
+        
+        // Atualizar o timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Atualizar o círculo de progresso
+            const circumference = 2 * Math.PI * 120;
+            const offset = circumference - (timeLeft / totalTime) * circumference;
+            progressRing.style.strokeDashoffset = offset;
+            
+            // Atualizar o display de ciclos
+            cycleDisplay.textContent = `${currentCycle}/${totalCycles}`;
+            cycleProgress.style.width = `${(currentCycle / totalCycles) * 100}%`;
+        }
+        
+        // Iniciar o timer
+        function startTimer() {
+            if (timerRunning) return;
+            
+            timerRunning = true;
+            timerPaused = false;
+            startTime = Date.now() - elapsedTime;
+            
+            startBtn.classList.add('hidden');
+            pauseBtn.classList.remove('hidden');
+            resumeBtn.classList.add('hidden');
+            
+            timer = setInterval(function() {
+                elapsedTime = Date.now() - startTime;
+                timeLeft = Math.max(0, totalTime - Math.floor(elapsedTime / 1000));
+                
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timerRunning = false;
+                    playAlertSound();
+                    
+                    // Mudar para o próximo modo
+                    if (currentMode === 'trabalho') {
+                        // Verificar se é hora de uma pausa longa
+                        if (currentCycle % totalCycles === 0) {
+                            currentMode = 'pausa_longa';
+                            timerLabel.textContent = 'Pausa Longa';
+                            timeLeft = config.pausa_longa * 60;
+                        } else {
+                            currentMode = 'pausa_curta';
+                            timerLabel.textContent = 'Pausa Curta';
+                            timeLeft = config.pausa_curta * 60;
+                        }
+                    } else {
+                        // Se estávamos em uma pausa, voltar para o trabalho
+                        if (currentMode === 'pausa_longa' || currentMode === 'pausa_curta') {
+                            // Incrementar o ciclo apenas após uma pausa
+                            if (currentMode === 'pausa_curta') {
+                                currentCycle++;
+                            }
+                            
+                            currentMode = 'trabalho';
+                            timerLabel.textContent = 'Trabalho';
+                            timeLeft = config.trabalho * 60;
+                            
+                            // Registrar a sessão concluída
+                            if (currentMode === 'trabalho') {
+                                registrarSessao();
+                            }
+                        }
+                    }
+                    
+                    totalTime = timeLeft;
+                    elapsedTime = 0;
+                    updateTimerDisplay();
+                    
+                    // Mostrar botão de iniciar
+                    startBtn.classList.remove('hidden');
+                    pauseBtn.classList.add('hidden');
+                    resumeBtn.classList.add('hidden');
+                }
+            }, 100);
+        }
+        
+        // Pausar o timer
+        function pauseTimer() {
+            if (!timerRunning || timerPaused) return;
+            
+            clearInterval(timer);
+            timerPaused = true;
+            timerRunning = false;
+            
+            pauseBtn.classList.add('hidden');
+            resumeBtn.classList.remove('hidden');
+        }
+        
+        // Continuar o timer
+        function resumeTimer() {
+            if (timerRunning || !timerPaused) return;
+            
+            startTime = Date.now() - elapsedTime;
+            timerPaused = false;
+            
+            startTimer();
+        }
+        
+        // Reiniciar o timer
+        function resetTimer() {
+            clearInterval(timer);
+            timerRunning = false;
+            timerPaused = false;
+            
+            currentMode = 'trabalho';
+            timerLabel.textContent = 'Trabalho';
+            timeLeft = config.trabalho * 60;
+            totalTime = timeLeft;
+            elapsedTime = 0;
+            
+            startBtn.classList.remove('hidden');
+            pauseBtn.classList.add('hidden');
+            resumeBtn.classList.add('hidden');
+            
+            updateTimerDisplay();
+        }
+        
+        // Tocar som de alerta
+        function playAlertSound() {
+            const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+            audio.play();
+        }
+        
+        // Registrar sessão concluída
+        function registrarSessao() {
+            const tarefaId = tarefaSelect.value;
+            const duracao = config.trabalho * 60; // duração em segundos
+            
+            fetch('{{ url_for("registrar_sessao_pomodoro") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({
+                    'duracao': duracao,
+                    'ciclos': 1,
+                    'tarefa_id': tarefaId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Erro ao registrar sessão:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+            });
+        }
+        
+        // Salvar configurações
+        function saveConfig() {
+            const trabalho = parseInt(trabalhoTimeInput.value) || 25;
+            const pausaCurta = parseInt(pausaCurtaTimeInput.value) || 5;
+            const pausaLonga = parseInt(pausaLongaTimeInput.value) || 15;
+            const ciclos = parseInt(ciclosCountInput.value) || 4;
+            
+            config = {
+                trabalho: trabalho,
+                pausa_curta: pausaCurta,
+                pausa_longa: pausaLonga,
+                ciclos: ciclos
+            };
+            
+            totalCycles = ciclos;
+            
+            // Atualizar o timer se não estiver rodando
+            if (!timerRunning) {
+                if (currentMode === 'trabalho') {
+                    timeLeft = trabalho * 60;
+                } else if (currentMode === 'pausa_curta') {
+                    timeLeft = pausaCurta * 60;
+                } else if (currentMode === 'pausa_longa') {
+                    timeLeft = pausaLonga * 60;
+                }
+                
+                totalTime = timeLeft;
+                updateTimerDisplay();
+            }
+            
+            // Salvar configurações no servidor
+            fetch('{{ url_for("salvar_config_pomodoro") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({
+                    'trabalho': trabalho,
+                    'pausa_curta': pausaCurta,
+                    'pausa_longa': pausaLonga,
+                    'ciclos': ciclos
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Configurações salvas com sucesso!');
+                } else {
+                    alert(data.message || 'Erro ao salvar configurações');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao salvar configurações');
+            });
+        }
+        
+        // Event listeners
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resumeBtn.addEventListener('click', resumeTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        saveConfigBtn.addEventListener('click', saveConfig);
+        
+        // Selecionar tarefa ao clicar
+        document.querySelectorAll('.tarefa-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const tarefaId = this.dataset.id;
+                tarefaSelect.value = tarefaId;
+            });
+        });
+        
+        // Inicializar o display do timer
+        updateTimerDisplay();
+        
+        // Configurar o círculo de progresso
+        const circumference = 2 * Math.PI * 120;
+        progressRing.style.strokeDasharray = circumference;
+        progressRing.style.strokeDashoffset = circumference;
+    });
+</script>
+{% endblock %}
