@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Kanban - Gerenciador de Tarefas Escolares{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl shadow-lg p-6 mb-6 text-white">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Quadro Kanban</h1>
+                <p class="text-blue-100">Visualize e organize suas tarefas em diferentes estágios</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a 
+                    href="{{ url_for('index') }}" 
+                    class="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Voltar para Tarefas
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Coluna: Pendentes -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Pendentes
+                </h2>
+                <span class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    {{ tarefas_pendentes|length }}
+                </span>
+            </div>
+            
+            <div class="kanban-column" id="pendente-column">
+                {% for tarefa in tarefas_pendentes %}
+                <div class="kanban-card bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm mb-3 border-l-4 
+                    {% if tarefa.esta_atrasada() %}
+                        border-red-500
+                    {% elif tarefa.prioridade == 'alta' %}
+                        border-orange-500
+                    {% elif tarefa.prioridade == 'baixa' %}
+                        border-green-500
+                    {% else %}
+                        border-blue-500
+                    {% endif %}" 
+                    data-id="{{ tarefa.id }}" 
+                    data-status="pendente"
+                >
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-medium text-gray-800 dark:text-gray-200">{{ tarefa.descricao }}</h3>
+                        <div class="flex space-x-1">
+                            <a href="{{ url_for('editar_tarefa', id=tarefa.id) }}" class="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        {% if tarefa.categoria %}
+                        <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">
+                            {{ tarefa.categoria }}
+                        </span>
+                        {% endif %}
+                        <span class="px-2 py-1 text-xs rounded-full
+                            {% if tarefa.prioridade == 'alta' %}
+                                bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
+                            {% elif tarefa.prioridade == 'baixa' %}
+                                bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
+                            {% else %}
+                                bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200
+                            {% endif %}
+                        ">
+                            {{ tarefa.prioridade }}
+                        </span>
+                        {% if tarefa.data_vencimento %}
+                        <span class="px-2 py-1 text-xs rounded-full
+                            {% if tarefa.esta_atrasada() %}
+                                bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
+                            {% else %}
+                                bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200
+                            {% endif %}
+                        ">
+                            {{ tarefa.data_vencimento.strftime('%d/%m/%Y') }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if tarefa.subtarefas %}
+                    <div class="mt-2">
+                        <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            <span>Progresso</span>
+                            <span>{{ tarefa.progresso_subtarefas() }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ tarefa.progresso_subtarefas() }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <p>Nenhuma tarefa pendente</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Coluna: Em Progresso -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Em Progresso
+                </h2>
+                <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    {{ tarefas_em_progresso|length }}
+                </span>
+            </div>
+            
+            <div class="kanban-column" id="em_progresso-column">
+                {% for tarefa in tarefas_em_progresso %}
+                <div class="kanban-card bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm mb-3 border-l-4 
+                    {% if tarefa.esta_atrasada() %}
+                        border-red-500
+                    {% elif tarefa.prioridade == 'alta' %}
+                        border-orange-500
+                    {% elif tarefa.prioridade == 'baixa' %}
+                        border-green-500
+                    {% else %}
+                        border-blue-500
+                    {% endif %}" 
+                    data-id="{{ tarefa.id }}" 
+                    data-status="em_progresso"
+                >
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-medium text-gray-800 dark:text-gray-200">{{ tarefa.descricao }}</h3>
+                        <div class="flex space-x-1">
+                            <a href="{{ url_for('editar_tarefa', id=tarefa.id) }}" class="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        {% if tarefa.categoria %}
+                        <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">
+                            {{ tarefa.categoria }}
+                        </span>
+                        {% endif %}
+                        <span class="px-2 py-1 text-xs rounded-full
+                            {% if tarefa.prioridade == 'alta' %}
+                                bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
+                            {% elif tarefa.prioridade == 'baixa' %}
+                                bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
+                            {% else %}
+                                bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200
+                            {% endif %}
+                        ">
+                            {{ tarefa.prioridade }}
+                        </span>
+                        {% if tarefa.data_vencimento %}
+                        <span class="px-2 py-1 text-xs rounded-full
+                            {% if tarefa.esta_atrasada() %}
+                                bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
+                            {% else %}
+                                bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200
+                            {% endif %}
+                        ">
+                            {{ tarefa.data_vencimento.strftime('%d/%m/%Y') }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if tarefa.subtarefas %}
+                    <div class="mt-2">
+                        <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            <span>Progresso</span>
+                            <span>{{ tarefa.progresso_subtarefas() }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ tarefa.progresso_subtarefas() }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <p>Nenhuma tarefa em progresso</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Coluna: Concluídas -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Concluídas
+                </h2>
+                <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    {{ tarefas_concluidas|length }}
+                </span>
+            </div>
+            
+            <div class="kanban-column" id="concluida-column">
+                {% for tarefa in tarefas_concluidas %}
+                <div class="kanban-card bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm mb-3 border-l-4 border-green-500" 
+                    data-id="{{ tarefa.id }}" 
+                    data-status="concluida"
+                >
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-medium text-gray-800 dark:text-gray-200">{{ tarefa.descricao }}</h3>
+                        <div class="flex space-x-1">
+                            <a href="{{ url_for('editar_tarefa', id=tarefa.id) }}" class="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        {% if tarefa.categoria %}
+                        <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">
+                            {{ tarefa.categoria }}
+                        </span>
+                        {% endif %}
+                        <span class="px-2 py-1 text-xs rounded-full
+                            {% if tarefa.prioridade == 'alta' %}
+                                bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
+                            {% elif tarefa.prioridade == 'baixa' %}
+                                bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
+                            {% else %}
+                                bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200
+                            {% endif %}
+                        ">
+                            {{ tarefa.prioridade }}
+                        </span>
+                        {% if tarefa.data_conclusao %}
+                        <span class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded-full">
+                            Concluída em {{ tarefa.data_conclusao.strftime('%d/%m/%Y') }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <p>Nenhuma tarefa concluída</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar Sortable para cada coluna
+        const columns = document.querySelectorAll('.kanban-column');
+        
+        columns.forEach(column => {
+            new Sortable(column, {
+                group: 'tarefas',
+                animation: 150,
+                ghostClass: 'bg-blue-100 dark:bg-blue-900',
+                onEnd: function(evt) {
+                    const tarefaId = evt.item.dataset.id;
+                    const novoStatus = evt.to.id.split('-')[0]; // Extrair status do ID da coluna
+                    
+                    // Atualizar o status da tarefa via AJAX
+                    // Corrigido para não usar concatenação com string vazia
+                    const url = `/atualizar_status_kanban/${tarefaId}`;
+                    
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            'status': novoStatus
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            alert(data.message || 'Erro ao atualizar status da tarefa');
+                            // Recarregar a página para restaurar o estado original
+                            window.location.reload();
+                        } else {
+                            // Atualizar o atributo data-status do item
+                            evt.item.dataset.status = novoStatus;
+                            
+                            // Atualizar contadores
+                            atualizarContadores();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        alert('Erro ao atualizar status da tarefa');
+                        window.location.reload();
+                    });
+                }
+            });
+        });
+        
+        function atualizarContadores() {
+            const pendenteCount = document.querySelectorAll('#pendente-column .kanban-card').length;
+            const emProgressoCount = document.querySelectorAll('#em_progresso-column .kanban-card').length;
+            const concluidaCount = document.querySelectorAll('#concluida-column .kanban-card').length;
+            
+            const pendenteSpan = document.querySelector('h2:nth-child(1) + span');
+            const emProgressoSpan = document.querySelector('h2:nth-child(1) + span');
+            const concluidaSpan = document.querySelector('h2:nth-child(1) + span');
+            
+            if (pendenteSpan) pendenteSpan.textContent = pendenteCount;
+            if (emProgressoSpan) emProgressoSpan.textContent = emProgressoCount;
+            if (concluidaSpan) concluidaSpan.textContent = concluidaCount;
+        }
+    });
+</script>
+{% endblock %}
