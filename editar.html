@@ -1,74 +1,176 @@
 {% extends "base.html" %}
 
+{% block title %}Editar Tarefa - Gerenciador de Tarefas Escolares{% endblock %}
+
 {% block content %}
-<div class="max-w-2xl mx-auto">
+<div class="max-w-4xl mx-auto">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-200 mb-6">Editar Tarefa</h1>
         
-        <form method="POST" class="space-y-6">
-            <div>
-                <label for="descricao" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descrição</label>
-                <input 
-                    type="text" 
-                    id="descricao" 
-                    name="descricao" 
-                    value="{{ tarefa.descricao }}" 
-                    required 
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-            </div>
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4 md:col-span-2">
+                    <label for="descricao" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descrição</label>
+                    <input 
+                        type="text" 
+                        id="descricao" 
+                        name="descricao" 
+                        value="{{ tarefa.descricao }}" 
+                        required 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                </div>
 
-            <div>
-                <label for="categoria" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categoria</label>
-                <select 
-                    id="categoria" 
-                    name="categoria" 
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                    <option value="">Selecione uma categoria</option>
-                    <option value="escola" {% if tarefa.categoria == 'escola' %}selected{% endif %}>Escola</option>
-                    <option value="trabalho" {% if tarefa.categoria == 'trabalho' %}selected{% endif %}>Trabalho</option>
-                    <option value="pessoal" {% if tarefa.categoria == 'pessoal' %}selected{% endif %}>Pessoal</option>
-                    <option value="prova" {% if tarefa.categoria == 'prova' %}selected{% endif %}>Prova</option>
-                    <option value="projeto" {% if tarefa.categoria == 'projeto' %}selected{% endif %}>Projeto</option>
-                </select>
-            </div>
+                <div>
+                    <label for="categoria" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categoria</label>
+                    <select 
+                        id="categoria" 
+                        name="categoria" 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="">Selecione uma categoria</option>
+                        <option value="escola" {% if tarefa.categoria == 'escola' %}selected{% endif %}>Escola</option>
+                        <option value="trabalho" {% if tarefa.categoria == 'trabalho' %}selected{% endif %}>Trabalho</option>
+                        <option value="pessoal" {% if tarefa.categoria == 'pessoal' %}selected{% endif %}>Pessoal</option>
+                        <option value="prova" {% if tarefa.categoria == 'prova' %}selected{% endif %}>Prova</option>
+                        <option value="projeto" {% if tarefa.categoria == 'projeto' %}selected{% endif %}>Projeto</option>
+                    </select>
+                </div>
 
-            <div>
-                <label for="prioridade" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prioridade</label>
-                <select 
-                    id="prioridade" 
-                    name="prioridade" 
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                    <option value="normal" {% if tarefa.prioridade == 'normal' %}selected{% endif %}>Normal</option>
-                    <option value="baixa" {% if tarefa.prioridade == 'baixa' %}selected{% endif %}>Baixa</option>
-                    <option value="alta" {% if tarefa.prioridade == 'alta' %}selected{% endif %}>Alta</option>
-                </select>
+                <div>
+                    <label for="prioridade" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prioridade</label>
+                    <select 
+                        id="prioridade" 
+                        name="prioridade" 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="normal" {% if tarefa.prioridade == 'normal' %}selected{% endif %}>Normal</option>
+                        <option value="baixa" {% if tarefa.prioridade == 'baixa' %}selected{% endif %}>Baixa</option>
+                        <option value="alta" {% if tarefa.prioridade == 'alta' %}selected{% endif %}>Alta</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="data_vencimento" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data de Vencimento</label>
+                    <input 
+                        type="date" 
+                        id="data_vencimento" 
+                        name="data_vencimento" 
+                        value="{{ tarefa.data_vencimento.strftime('%Y-%m-%d') if tarefa.data_vencimento else '' }}" 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                </div>
+                
+                <div>
+                    <label for="status_kanban" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status no Kanban</label>
+                    <select 
+                        id="status_kanban" 
+                        name="status_kanban" 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="pendente" {% if tarefa.status_kanban == 'pendente' %}selected{% endif %}>Pendente</option>
+                        <option value="em_progresso" {% if tarefa.status_kanban == 'em_progresso' %}selected{% endif %}>Em Progresso</option>
+                        <option value="concluida" {% if tarefa.status_kanban == 'concluida' %}selected{% endif %}>Concluída</option>
+                    </select>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label for="notas" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notas Adicionais</label>
+                    <textarea 
+                        id="notas" 
+                        name="notas" 
+                        rows="4" 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >{{ tarefa.notas or '' }}</textarea>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label for="anexo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Adicionar Anexo</label>
+                    <input 
+                        type="file" 
+                        id="anexo" 
+                        name="anexo" 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                </div>
             </div>
             
-            <div>
-                <label for="data_vencimento" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data de Vencimento</label>
-                <input 
-                    type="date" 
-                    id="data_vencimento" 
-                    name="data_vencimento" 
-                    value="{{ tarefa.data_vencimento.strftime('%Y-%m-%d') if tarefa.data_vencimento else '' }}" 
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
+            <!-- Subtarefas -->
+            <div class="mt-6">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-200 mb-3">Subtarefas</h3>
+                
+                <div id="subtarefas-container" class="space-y-2 mb-4">
+                    {% for subtarefa in tarefa.subtarefas %}
+                    <div class="flex items-center gap-2 subtarefa-item" data-id="{{ subtarefa.id }}">
+                        <input 
+                            type="checkbox" 
+                            {% if subtarefa.concluida %}checked{% endif %} 
+                            class="toggle-subtarefa h-5 w-5 text-blue-600 dark:text-blue-500 rounded border-gray-300 dark:border-gray-600 focus:ring-blue-500"
+                        >
+                        <input 
+                            type="text" 
+                            value="{{ subtarefa.descricao }}" 
+                            class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 subtarefa-descricao"
+                            {% if subtarefa.concluida %}disabled{% endif %}
+                        >
+                        <button type="button" class="delete-subtarefa p-2 text-red-500 hover:text-red-700 dark:hover:text-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="flex gap-2">
+                    <input 
+                        type="text" 
+                        id="nova-subtarefa" 
+                        placeholder="Adicionar nova subtarefa..." 
+                        class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                    <button 
+                        type="button" 
+                        id="adicionar-subtarefa" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        Adicionar
+                    </button>
+                </div>
             </div>
             
-            <div>
-                <label for="notas" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notas Adicionais</label>
-                <textarea 
-                    id="notas" 
-                    name="notas" 
-                    rows="4" 
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >{{ tarefa.notas or '' }}</textarea>
+            <!-- Anexos existentes -->
+            {% if tarefa.anexos %}
+            <div class="mt-6">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-200 mb-3">Anexos</h3>
+                <div class="space-y-2">
+                    {% for anexo in tarefa.anexos %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                            <span class="text-gray-700 dark:text-gray-300">{{ anexo.nome_arquivo }}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{{ url_for('download_anexo', id=anexo.id) }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                            </a>
+                            <button type="button" class="delete-anexo text-red-500 hover:text-red-700 dark:hover:text-red-400" data-id="{{ anexo.id }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
+            {% endif %}
 
-            <div class="flex gap-4">
+            <div class="flex gap-4 mt-8">
                 <button 
                     type="submit" 
                     class="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -85,4 +187,159 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const subtarefasContainer = document.getElementById('subtarefas-container');
+        const novaSubtarefaInput = document.getElementById('nova-subtarefa');
+        const adicionarSubtarefaBtn = document.getElementById('adicionar-subtarefa');
+        
+        // Adicionar nova subtarefa
+        adicionarSubtarefaBtn.addEventListener('click', function() {
+            const descricao = novaSubtarefaInput.value.trim();
+            if (!descricao) return;
+            
+            fetch('{{ url_for("adicionar_subtarefa", tarefa_id=tarefa.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({
+                    'descricao': descricao
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Criar novo elemento de subtarefa
+                    const subtarefaDiv = document.createElement('div');
+                    subtarefaDiv.className = 'flex items-center gap-2 subtarefa-item';
+                    subtarefaDiv.dataset.id = data.id;
+                    
+                    subtarefaDiv.innerHTML = `
+                        <input 
+                            type="checkbox" 
+                            class="toggle-subtarefa h-5 w-5 text-blue-600 dark:text-blue-500 rounded border-gray-300 dark:border-gray-600 focus:ring-blue-500"
+                        >
+                        <input 
+                            type="text" 
+                            value="${data.descricao}" 
+                            class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 subtarefa-descricao"
+                        >
+                        <button type="button" class="delete-subtarefa p-2 text-red-500 hover:text-red-700 dark:hover:text-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    `;
+                    
+                    subtarefasContainer.appendChild(subtarefaDiv);
+                    novaSubtarefaInput.value = '';
+                    
+                    // Adicionar event listeners para a nova subtarefa
+                    adicionarEventListenersSubtarefa(subtarefaDiv);
+                } else {
+                    alert(data.message || 'Erro ao adicionar subtarefa');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao adicionar subtarefa');
+            });
+        });
+        
+        // Adicionar event listeners para subtarefas existentes
+        document.querySelectorAll('.subtarefa-item').forEach(adicionarEventListenersSubtarefa);
+        
+        function adicionarEventListenersSubtarefa(subtarefaDiv) {
+            // Toggle subtarefa
+            const checkbox = subtarefaDiv.querySelector('.toggle-subtarefa');
+            const input = subtarefaDiv.querySelector('.subtarefa-descricao');
+            
+            checkbox.addEventListener('change', function() {
+                const subtarefaId = subtarefaDiv.dataset.id;
+                
+                fetch(`{{ url_for("toggle_subtarefa", id=0) }}`.replace('/0', `/${subtarefaId}`), {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        input.disabled = data.concluida;
+                    } else {
+                        alert(data.message || 'Erro ao atualizar subtarefa');
+                        checkbox.checked = !checkbox.checked; // Reverter mudança
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao atualizar subtarefa');
+                    checkbox.checked = !checkbox.checked; // Reverter mudança
+                });
+            });
+            
+            // Deletar subtarefa
+            const deleteBtn = subtarefaDiv.querySelector('.delete-subtarefa');
+            deleteBtn.addEventListener('click', function() {
+                if (!confirm('Tem certeza que deseja excluir esta subtarefa?')) return;
+                
+                const subtarefaId = subtarefaDiv.dataset.id;
+                
+                fetch(`{{ url_for("deletar_subtarefa", id=0) }}`.replace('/0', `/${subtarefaId}`), {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        subtarefaDiv.remove();
+                    } else {
+                        alert(data.message || 'Erro ao excluir subtarefa');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao excluir subtarefa');
+                });
+            });
+        }
+        
+        // Deletar anexos
+        document.querySelectorAll('.delete-anexo').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (!confirm('Tem certeza que deseja excluir este anexo?')) return;
+                
+                const anexoId = this.dataset.id;
+                const anexoDiv = this.closest('div.flex.items-center.justify-between');
+                
+                fetch(`{{ url_for("deletar_anexo", id=0) }}`.replace('/0', `/${anexoId}`), {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        anexoDiv.remove();
+                    } else {
+                        alert(data.message || 'Erro ao excluir anexo');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao excluir anexo');
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}
