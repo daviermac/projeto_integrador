@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}Tarefas - Gerenciador de Tarefas Escolares{% endblock %}
+
 {% block content %}
 <div class="mb-8">
     <!-- Header com estatísticas -->
@@ -34,7 +36,7 @@
             </svg>
             Nova Tarefa
         </h2>
-        <form action="{{ url_for('adicionar_tarefa') }}" method="POST" class="space-y-4">
+        <form action="{{ url_for('adicionar_tarefa') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
             <div class="flex flex-col md:flex-row gap-4">
                 <div class="flex-1">
                     <input 
@@ -73,13 +75,40 @@
                     </button>
                 </div>
             </div>
-            <div>
-                <textarea 
-                    name="notas" 
-                    placeholder="Notas adicionais (opcional)" 
-                    class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows="2"
-                ></textarea>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <textarea 
+                        name="notas" 
+                        placeholder="Notas adicionais (opcional)" 
+                        class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows="2"
+                    ></textarea>
+                </div>
+                <div>
+                    <div class="flex flex-col">
+                        <div class="flex items-center mb-2">
+                            <button type="button" id="add-subtarefa" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Adicionar Subtarefa
+                            </button>
+                            <input type="file" name="anexo" id="anexo" class="hidden">
+                            <label for="anexo" class="ml-4 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm flex items-center cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
+                                Anexar Arquivo
+                            </label>
+                            <span id="file-name" class="ml-2 text-sm text-gray-500 dark:text-gray-400"></span>
+                        </div>
+                        <div id="subtarefas-container" class="space-y-2">
+                            <!-- Subtarefas serão adicionadas aqui -->
+                        </div>
+                        <input type="hidden" name="subtarefas" id="subtarefas-input">
+                    </div>
+                </div>
             </div>
         </form>
     </div>
@@ -111,6 +140,12 @@
             >
                 Alta prioridade
             </a>
+            <a 
+                href="{{ url_for('index', filtro='atrasadas') }}"
+                class="px-4 py-2 rounded-full whitespace-nowrap {% if request.args.get('filtro') == 'atrasadas' %}bg-blue-600 text-white{% else %}bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700{% endif %} transition-colors"
+            >
+                Atrasadas
+            </a>
         </div>
         <div class="w-full md:w-auto">
             <form action="{{ url_for('index') }}" method="GET" class="flex">
@@ -136,7 +171,7 @@
     <!-- Lista de Tarefas -->
     <div class="space-y-4">
         {% for tarefa in tarefas %}
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-all transform hover:-translate-y-1 border-l-4 
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex flex-col hover:shadow-md transition-all transform hover:-translate-y-1 border-l-4 
             {% if tarefa.esta_atrasada() %}
                 border-red-500
             {% elif tarefa.prioridade == 'alta' %}
@@ -146,95 +181,156 @@
             {% else %}
                 border-blue-500
             {% endif %}">
-            <div class="flex items-center gap-3 flex-1">
-                <form action="{{ url_for('toggle_tarefa', id=tarefa.id) }}" method="POST" class="inline">
-                    <button 
-                        type="submit"
-                        class="rounded-full p-2 {% if tarefa.concluida %}bg-green-100 dark:bg-green-900 text-green-500 dark:text-green-300{% else %}bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-500 dark:hover:text-blue-300{% endif %} transition-colors"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </button>
-                </form>
-                <div class="flex-1">
-                    <span class="text-lg {% if tarefa.concluida %}line-through text-gray-400 dark:text-gray-500{% else %}text-gray-700 dark:text-gray-200{% endif %}">
-                        {{ tarefa.descricao }}
-                    </span>
-                    <div class="flex flex-wrap gap-2 mt-1">
-                        {% if tarefa.categoria %}
-                        <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3 flex-1">
+                    <form action="{{ url_for('toggle_tarefa', id=tarefa.id) }}" method="POST" class="inline">
+                        <button 
+                            type="submit"
+                            class="rounded-full p-2 {% if tarefa.concluida %}bg-green-100 dark:bg-green-900 text-green-500 dark:text-green-300{% else %}bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-500 dark:hover:text-blue-300{% endif %} transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            {{ tarefa.categoria }}
+                        </button>
+                    </form>
+                    <div class="flex-1">
+                        <span class="text-lg {% if tarefa.concluida %}line-through text-gray-400 dark:text-gray-500{% else %}text-gray-700 dark:text-gray-200{% endif %}">
+                            {{ tarefa.descricao }}
                         </span>
-                        {% endif %}
-                        <span class="px-2 py-1 text-xs rounded-full flex items-center
-                            {% if tarefa.prioridade == 'alta' %}
-                                bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
-                            {% elif tarefa.prioridade == 'baixa' %}
-                                bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
-                            {% else %}
-                                bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200
+                        <div class="flex flex-wrap gap-2 mt-1">
+                            {% if tarefa.categoria %}
+                            <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                </svg>
+                                {{ tarefa.categoria }}
+                            </span>
                             {% endif %}
-                        ">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            {{ tarefa.prioridade }}
-                        </span>
-                        {% if tarefa.data_vencimento %}
-                        <span class="px-2 py-1 text-xs rounded-full flex items-center
-                            {% if tarefa.esta_atrasada() %}
-                                bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
-                            {% else %}
-                                bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200
+                            <span class="px-2 py-1 text-xs rounded-full flex items-center
+                                {% if tarefa.prioridade == 'alta' %}
+                                    bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
+                                {% elif tarefa.prioridade == 'baixa' %}
+                                    bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
+                                {% else %}
+                                    bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200
+                                {% endif %}
+                            ">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                {{ tarefa.prioridade }}
+                            </span>
+                            {% if tarefa.data_vencimento %}
+                            <span class="px-2 py-1 text-xs rounded-full flex items-center
+                                {% if tarefa.esta_atrasada() %}
+                                    bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
+                                {% else %}
+                                    bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200
+                                {% endif %}
+                            ">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {{ tarefa.data_vencimento.strftime('%d/%m/%Y') }}
+                            </span>
                             {% endif %}
-                        ">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            {{ tarefa.data_vencimento.strftime('%d/%m/%Y') }}
-                        </span>
-                        {% endif %}
-                        <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {{ tarefa.data_criacao.strftime('%d/%m/%Y') }}
-                        </span>
+                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {{ tarefa.data_criacao.strftime('%d/%m/%Y') }}
+                            </span>
+                            {% if tarefa.status_kanban == 'em_progresso' %}
+                            <span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Em Progresso
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% if tarefa.notas %}
-                    <div class="mt-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                        {{ tarefa.notas }}
-                    </div>
-                    {% endif %}
                 </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <a 
-                    href="{{ url_for('editar_tarefa', id=tarefa.id) }}" 
-                    class="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors"
-                    title="Editar"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                    </svg>
-                </a>
-                <form action="{{ url_for('deletar_tarefa', id=tarefa.id) }}" method="POST" class="inline">
-                    <button 
-                        type="submit"
-                        class="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 transition-colors"
-                        onclick="return confirm('Tem certeza que deseja excluir esta tarefa?')"
-                        title="Excluir"
+                <div class="flex items-center gap-2">
+                    <a 
+                        href="{{ url_for('editar_tarefa', id=tarefa.id) }}" 
+                        class="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors"
+                        title="Editar"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                         </svg>
-                    </button>
-                </form>
+                    </a>
+                    <form action="{{ url_for('deletar_tarefa', id=tarefa.id) }}" method="POST" class="inline">
+                        <button 
+                            type="submit"
+                            class="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 transition-colors"
+                            onclick="return confirm('Tem certeza que deseja excluir esta tarefa?')"
+                            title="Excluir"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
             </div>
+            
+            {% if tarefa.notas %}
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded">
+                {{ tarefa.notas }}
+            </div>
+            {% endif %}
+            
+            <!-- Subtarefas -->
+            {% if tarefa.subtarefas %}
+            <div class="mt-3">
+                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <span>Progresso</span>
+                    <span>{{ tarefa.progresso_subtarefas() }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mb-3">
+                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ tarefa.progresso_subtarefas() }}%"></div>
+                </div>
+                <div class="space-y-2 pl-10">
+                    {% for subtarefa in tarefa.subtarefas %}
+                    <div class="flex items-center gap-2">
+                        <button 
+                            onclick="toggleSubtarefa(event, {{ subtarefa.id }})"
+                            class="rounded-full p-1 {% if subtarefa.concluida %}bg-green-100 dark:bg-green-900 text-green-500 dark:text-green-300{% else %}bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-500 dark:hover:text-blue-300{% endif %} transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>
+                        <span class="text-sm {% if subtarefa.concluida %}line-through text-gray-400 dark:text-gray-500{% else %}text-gray-700 dark:text-gray-300{% endif %}">
+                            {{ subtarefa.descricao }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Anexos -->
+            {% if tarefa.anexos %}
+            <div class="mt-3 pl-10">
+                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Anexos:</div>
+                <div class="space-y-1">
+                    {% for anexo in tarefa.anexos %}
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                        </svg>
+                        <a href="{{ url_for('download_anexo', id=anexo.id) }}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                            {{ anexo.nome_arquivo }}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
         {% else %}
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
@@ -273,17 +369,141 @@
             <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
                 <h4 class="font-medium text-blue-600 dark:text-blue-400 mb-2">Técnica Pomodoro</h4>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Estude por 25 minutos e descanse por 5. Após 4 ciclos, faça uma pausa maior.</p>
+                <a href="{{ url_for('pomodoro') }}" class="mt-2 inline-block text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    Usar Timer Pomodoro →
+                </a>
             </div>
             <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-                <h4 class="font-medium text-blue-600 dark:text-blue-400 mb-2">Priorize suas tarefas</h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Comece pelas tarefas mais importantes ou com prazo mais próximo.</p>
+                <h4 class="font-medium text-blue-600 dark:text-blue-400 mb-2">Visualização Kanban</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Organize suas tarefas em colunas: Pendentes, Em Progresso e Concluídas.</p>
+                <a href="{{ url_for('kanban') }}" class="mt-2 inline-block text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    Ver Quadro Kanban →
+                </a>
             </div>
             <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-                <h4 class="font-medium text-blue-600 dark:text-blue-400 mb-2">Revise regularmente</h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Dedique um tempo para revisar o conteúdo estudado anteriormente.</p>
+                <h4 class="font-medium text-blue-600 dark:text-blue-400 mb-2">Acompanhe seu Progresso</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Visualize estatísticas e gráficos para entender melhor seus hábitos de estudo.</p>
+                <a href="{{ url_for('estatisticas') }}" class="mt-2 inline-block text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    Ver Estatísticas →
+                </a>
             </div>
         </div>
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gerenciamento de subtarefas
+        const addSubtarefaBtn = document.getElementById('add-subtarefa');
+        const subtarefasContainer = document.getElementById('subtarefas-container');
+        const subtarefasInput = document.getElementById('subtarefas-input');
+        let subtarefas = [];
+        
+        addSubtarefaBtn.addEventListener('click', function() {
+            const subtarefaDiv = document.createElement('div');
+            subtarefaDiv.className = 'flex items-center gap-2';
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'Descrição da subtarefa';
+            input.className = 'flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent';
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'text-red-500 hover:text-red-700 dark:hover:text-red-400';
+            removeBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            `;
+            
+            removeBtn.addEventListener('click', function() {
+                subtarefaDiv.remove();
+                atualizarSubtarefasInput();
+            });
+            
+            input.addEventListener('input', atualizarSubtarefasInput);
+            
+            subtarefaDiv.appendChild(input);
+            subtarefaDiv.appendChild(removeBtn);
+            subtarefasContainer.appendChild(subtarefaDiv);
+            
+            input.focus();
+        });
+        
+        function atualizarSubtarefasInput() {
+            const inputs = subtarefasContainer.querySelectorAll('input[type="text"]');
+            subtarefas = Array.from(inputs).map(input => input.value).filter(value => value.trim() !== '');
+            subtarefasInput.value = JSON.stringify(subtarefas);
+        }
+        
+    // Exibir nome do arquivo anexado
+    const anexoInput = document.getElementById('anexo');
+    const fileNameSpan = document.getElementById('file-name');
+    
+    anexoInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            fileNameSpan.textContent = this.files[0].name;
+        } else {
+            fileNameSpan.textContent = '';
+        }
+    });
+
+    // Toggle de subtarefas via AJAX
+    async function toggleSubtarefa(event, subtarefaId) {
+        event.preventDefault();
+        
+        const button = event.currentTarget;
+        const subtarefaText = button.nextElementSibling;
+        const icon = button.querySelector('svg');
+        
+        try {
+            // Mostrar estado de carregamento
+            button.disabled = true;
+            icon.classList.add('animate-spin');
+            
+            const response = await fetch(`/toggle_subtarefa/${subtarefaId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) throw new Error('Erro na requisição');
+            
+            const data = await response.json();
+            
+            // Atualizar UI
+            if (data.concluida) {
+                button.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-400', 'dark:text-gray-500');
+                button.classList.add('bg-green-100', 'dark:bg-green-900', 'text-green-500', 'dark:text-green-300');
+                subtarefaText.classList.add('line-through', 'text-gray-400', 'dark:text-gray-500');
+            } else {
+                button.classList.remove('bg-green-100', 'dark:bg-green-900', 'text-green-500', 'dark:text-green-300');
+                button.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-400', 'dark:text-gray-500');
+                subtarefaText.classList.remove('line-through', 'text-gray-400', 'dark:text-gray-500');
+            }
+            
+            // Atualizar barra de progresso se existir
+            const progressBar = button.closest('.mt-3').querySelector('.bg-blue-600');
+            if (progressBar) {
+                const progressText = button.closest('.mt-3').querySelector('span:last-child');
+                progressBar.style.width = `${data.progresso}%`;
+                progressText.textContent = `${data.progresso}%`;
+            }
+            
+        } catch (error) {
+            console.error('Erro ao alternar subtarefa:', error);
+            alert('Ocorreu um erro ao atualizar a subtarefa');
+        } finally {
+            button.disabled = false;
+            icon.classList.remove('animate-spin');
+        }
+    }
+    });
+</script>
 {% endblock %}
