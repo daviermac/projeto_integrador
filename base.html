@@ -6,6 +6,29 @@
     <title>{% block title %}Gerenciador de Tarefas Escolares{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -58,7 +81,33 @@
         .dark .bg-gradient-to-br {
             background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
         }
+
+        /* Kanban */
+        .kanban-column {
+            min-height: 500px;
+        }
+        
+        .kanban-card {
+            cursor: grab;
+        }
+        
+        .kanban-card:active {
+            cursor: grabbing;
+        }
+        
+        /* Pomodoro Timer */
+        .timer-display {
+            font-family: 'Inter', monospace;
+            font-size: 4rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
     </style>
+    {% block head_extra %}{% endblock %}
 </head>
 <body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
     {% if current_user.is_authenticated %}
@@ -66,12 +115,23 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="{{ url_for('index') }}" class="text-xl font-bold text-blue-600">
+                    <a href="{{ url_for('index') }}" class="text-xl font-bold text-blue-600 dark:text-blue-400">
                         Gerenciador de Tarefas Escolares
                     </a>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span class="text-gray-700 dark:text-gray-300">Olá, {{ current_user.nome }}!</span>
+                    <a href="{{ url_for('index') }}" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium">
+                        Tarefas
+                    </a>
+                    <a href="{{ url_for('kanban') }}" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium">
+                        Kanban
+                    </a>
+                    <a href="{{ url_for('pomodoro') }}" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium">
+                        Pomodoro
+                    </a>
+                    <a href="{{ url_for('estatisticas') }}" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium">
+                        Estatísticas
+                    </a>
                     <form action="{{ url_for('alternar_tema') }}" method="POST" class="inline">
                         <button type="submit" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full">
                             {% if current_user.tema == 'dark' %}
@@ -94,7 +154,7 @@
     </nav>
     {% endif %}
 
-    <main class="max-w-4xl mx-auto px-4 py-8">
+    <main class="max-w-7xl mx-auto px-4 py-8">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -115,5 +175,7 @@
             </p>
         </div>
     </footer>
+
+    {% block scripts %}{% endblock %}
 </body>
 </html>
