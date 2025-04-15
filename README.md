@@ -38,7 +38,7 @@ Um sistema completo de gerenciamento de tarefas com Kanban, Pomodoro e estatíst
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/daviermac/projeto_integrador
+git clone (https://github.com/daviermac/projeto_integrador.git)
 cd projeto_integrador
 ```
 
