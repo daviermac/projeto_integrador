@@ -2,7 +2,7 @@
 
 Um sistema completo de gerenciamento de tarefas com Kanban, Pomodoro e estatísticas, desenvolvido em Python com Flask.
 
-## 🚀 Funcionalidades Principais
+## Funcionalidades Principais
 
 - **Tarefas Básicas**
   - Adicionar/editar/remover tarefas
@@ -28,60 +28,49 @@ Um sistema completo de gerenciamento de tarefas com Kanban, Pomodoro e estatíst
   - Perfil personalizado
   - Recuperação de senha
 
-## 📦 Requisitos
+## Requisitos
 
 - Python 3.8+
 - pip
 - SQLite3 (incluído no Python)
 
-## 🔧 Instalação
+## Dependências
 
-1. Clone o repositório:
+O projeto utiliza as seguintes bibliotecas Python, que estão listadas no arquivo `requirements.txt`:
+
+- Flask==2.3.2
+- Flask-SQLAlchemy==3.0.3
+- Werkzeug==2.3.6
+- Jinja2==3.1.2
+- SQLAlchemy==2.0.19
+- Flask-Login==0.6.2
+- python-dotenv==1.0.0
+- Flask-Mail (para envio de emails de redefinição de senha)
+
+Para instalar todas as dependências, execute:
+
 ```bash
-git clone (https://github.com/daviermac/projeto_integrador.git)
+pip install -r requirements.txt
+
+1: Instalação e Execução:
+
+git clone https://github.com/daviermac/projeto_integrador.git
 cd projeto_integrador
-```
 
-2. Crie e ative o ambiente virtual:
-```bash
+
+2: Crie e ative o ambiente virtual:
 python -m venv venv
 # Windows:
 venv\Scripts\activate
 # Linux/macOS:
 source venv/bin/activate
-```
 
-3. Instale as dependências:
-```bash
+
+3:Instale as dependências
+
 pip install -r requirements.txt
-```
 
-4. Execute a aplicação:
-```bash
+
+4: Execute a aplicação:
 python app.py
-```
-
-5. Acesse no navegador:
-```
-http://localhost:5000
-```
-
-## 🏗️ Estrutura do Projeto
-
-```
-projeto_integrador/
-├── app.py              # Aplicação principal
-├── models.py           # Modelos de banco de dados
-├── implementos.py      # Utilitários e helpers
-├── requirements.txt    # Dependências
-├── static/             # CSS, JS, imagens
-│   └── uploads/        # Arquivos enviados
-├── templates/          # Templates HTML
-└── instance/           # Banco de dados SQLite
-```
-
-# Rodar em modo desenvolvimento
-export FLASK_ENV=development
-flask run
-```
 
