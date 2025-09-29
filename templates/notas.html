@@ -1,0 +1,648 @@
+{% extends "base.html" %}
+
+{% block title %}Notas - Gerenciador de Tarefas Escolares{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Notas</h1>
+        <div class="flex space-x-4">
+            <input type="text" id="busca-notas" placeholder="Buscar notas..." class="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <button id="btn-nova-nota" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                + Nova Nota
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros e Categorias -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+        <div class="flex flex-wrap gap-4 items-center justify-between">
+            <div class="flex flex-wrap gap-4">
+                <div class="flex items-center">
+                    <input type="checkbox" id="mostrar-favoritas" class="mr-2">
+                    <label for="mostrar-favoritas" class="text-sm text-gray-700 dark:text-gray-300">Apenas Favoritas</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="mostrar-recentes" class="mr-2">
+                    <label for="mostrar-recentes" class="text-sm text-gray-700 dark:text-gray-300">Ordenar por Recentes</label>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <select id="filtro-categoria" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                    <option value="">Todas as Categorias</option>
+                    <!-- Categorias serão inseridas via JavaScript -->
+                </select>
+                <select id="ordenacao" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                    <option value="data_modificacao">Data de Modificação</option>
+                    <option value="titulo">Título</option>
+                    <option value="favorita">Favoritas Primeiro</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Notas -->
+    <div id="grid-notas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Notas serão inseridas via JavaScript -->
+    </div>
+
+    <!-- Estado vazio -->
+    <div id="estado-vazio" class="hidden text-center py-12">
+        <div class="text-gray-400 dark:text-gray-600 mb-4">
+            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">Nenhuma nota encontrada</h3>
+        <p class="text-gray-500 dark:text-gray-500 mb-4">Crie sua primeira nota para começar a organizar suas ideias.</p>
+        <button id="btn-primeira-nota" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+            Criar Primeira Nota
+        </button>
+    </div>
+
+    <!-- Modal de Nova/Editar Nota -->
+    <div id="modal-nota" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex justify-center items-center min-h-screen p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                <div class="flex flex-col h-full">
+                    <!-- Cabeçalho do Modal -->
+                    <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h2 id="titulo-modal" class="text-2xl font-bold text-gray-900 dark:text-white">Nova Nota</h2>
+                        <div class="flex items-center space-x-4">
+                            <button id="btn-favoritar" class="text-gray-400 hover:text-yellow-500 transition-colors" title="Favoritar">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                </svg>
+                            </button>
+                            <button id="btn-fechar-modal-nota" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo do Modal -->
+                    <div class="flex-1 overflow-hidden">
+                        <div class="p-6 h-full">
+                            <form id="form-nota">
+                                <div class="mb-4">
+                                    <input type="text" id="titulo-nota" name="titulo" placeholder="Título da nota..."
+                                           class="w-full text-xl font-semibold border-0 border-b-2 border-gray-200 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none pb-2 mb-4">
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Categoria</label>
+                                        <button type="button" id="btn-nova-categoria" class="text-sm text-blue-500 hover:text-blue-600 dark:hover:text-blue-400">
+                                            + Nova Categoria
+                                        </button>
+                                    </div>
+                                    <select id="categoria-nota" name="categoria_id"
+                                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        <option value="">Sem categoria</option>
+                                        <!-- Categorias serão inseridas via JavaScript -->
+                                    </select>
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="flex items-center space-x-4 mb-2">
+                                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Cor de Fundo</label>
+                                        <div class="flex gap-2">
+                                            <button type="button" class="w-6 h-6 rounded border-2 border-gray-300" data-cor="#ffffff" style="background-color: #ffffff;"></button>
+                                            <button type="button" class="w-6 h-6 rounded border-2 border-gray-300" data-cor="#fef3c7" style="background-color: #fef3c7;"></button>
+                                            <button type="button" class="w-6 h-6 rounded border-2 border-gray-300" data-cor="#d1fae5" style="background-color: #d1fae5;"></button>
+                                            <button type="button" class="w-6 h-6 rounded border-2 border-gray-300" data-cor="#dbeafe" style="background-color: #dbeafe;"></button>
+                                            <button type="button" class="w-6 h-6 rounded border-2 border-gray-300" data-cor="#f3e8ff" style="background-color: #f3e8ff;"></button>
+                                            <button type="button" class="w-6 h-6 rounded border-2 border-gray-300" data-cor="#fce7f3" style="background-color: #fce7f3;"></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <textarea id="conteudo-nota" name="conteudo" placeholder="Digite sua nota aqui..."
+                                              class="w-full h-96 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none resize-none"></textarea>
+                                </div>
+
+                                <div class="flex justify-between items-center">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        <span id="contador-caracteres">0</span> caracteres
+                                    </div>
+                                    <div class="flex space-x-4">
+                                        <button type="button" id="btn-preview" class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
+                                            Preview
+                                        </button>
+                                        <button type="button" id="btn-cancelar-nota" class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
+                                            Cancelar
+                                        </button>
+                                        <button type="submit" class="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors">
+                                            Salvar Nota
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Preview -->
+    <div id="modal-preview" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex justify-center items-center min-h-screen p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                <div class="flex flex-col h-full">
+                    <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Preview da Nota</h2>
+                        <button id="btn-fechar-preview" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flex-1 overflow-auto p-6">
+                        <div id="preview-conteudo" class="prose dark:prose-invert max-w-none">
+                            <!-- Preview será inserido aqui -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Nova Categoria -->
+    <div id="modal-categoria" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex justify-center items-center min-h-screen p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+                <div class="p-6">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Nova Categoria</h2>
+                    <form id="form-categoria">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Nome da Categoria
+                            </label>
+                            <input type="text" id="nome-categoria" name="nome" required
+                                   class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Cor
+                            </label>
+                            <input type="color" id="cor-categoria" name="cor" value="#6b7280"
+                                   class="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                        </div>
+                        <div class="flex justify-end space-x-4">
+                            <button type="button" id="btn-cancelar-categoria"
+                                    class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                    class="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors">
+                                Criar Categoria
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+class NotasManager {
+    constructor() {
+        this.notas = [];
+        this.categorias = [];
+        this.notaAtual = null;
+        this.init();
+    }
+
+    init() {
+        this.carregarDados();
+        this.configurarEventListeners();
+    }
+
+    configurarEventListeners() {
+        // Nova nota
+        document.getElementById('btn-nova-nota').addEventListener('click', () => {
+            this.abrirModalNota();
+        });
+
+        document.getElementById('btn-primeira-nota').addEventListener('click', () => {
+            this.abrirModalNota();
+        });
+
+        // Busca
+        document.getElementById('busca-notas').addEventListener('input', (e) => {
+            this.filtrarNotas(e.target.value);
+        });
+
+        // Filtros
+        document.getElementById('mostrar-favoritas').addEventListener('change', () => {
+            this.aplicarFiltros();
+        });
+
+        document.getElementById('mostrar-recentes').addEventListener('change', () => {
+            this.aplicarFiltros();
+        });
+
+        document.getElementById('filtro-categoria').addEventListener('change', () => {
+            this.aplicarFiltros();
+        });
+
+        document.getElementById('ordenacao').addEventListener('change', () => {
+            this.aplicarFiltros();
+        });
+
+        // Modal de nota
+        document.getElementById('btn-fechar-modal-nota').addEventListener('click', () => {
+            this.fecharModalNota();
+        });
+
+        document.getElementById('btn-cancelar-nota').addEventListener('click', () => {
+            this.fecharModalNota();
+        });
+
+        document.getElementById('form-nota').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.salvarNota();
+        });
+
+        // Preview
+        document.getElementById('btn-preview').addEventListener('click', () => {
+            this.mostrarPreview();
+        });
+
+        document.getElementById('btn-fechar-preview').addEventListener('click', () => {
+            this.fecharPreview();
+        });
+
+        // Favoritar
+        document.getElementById('btn-favoritar').addEventListener('click', () => {
+            this.toggleFavorita();
+        });
+
+        // Nova categoria
+        document.getElementById('btn-nova-categoria').addEventListener('click', () => {
+            this.abrirModalCategoria();
+        });
+
+        document.getElementById('btn-cancelar-categoria').addEventListener('click', () => {
+            this.fecharModalCategoria();
+        });
+
+        document.getElementById('form-categoria').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.salvarCategoria();
+        });
+
+        // Contador de caracteres
+        document.getElementById('conteudo-nota').addEventListener('input', (e) => {
+            this.atualizarContador(e.target.value.length);
+        });
+
+        // Cores de fundo
+        document.querySelectorAll('[data-cor]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.selecionarCorFundo(btn.dataset.cor);
+            });
+        });
+    }
+
+    async carregarDados() {
+        try {
+            // Carregar notas
+            const responseNotas = await fetch('/notas/api/notas');
+            if (responseNotas.ok) {
+                this.notas = await responseNotas.json();
+            }
+
+            // Carregar categorias
+            const responseCategorias = await fetch('/notas/api/categorias');
+            if (responseCategorias.ok) {
+                this.categorias = await responseCategorias.json();
+            }
+
+            this.renderizarCategorias();
+            this.renderizarNotas();
+        } catch (error) {
+            console.error('Erro ao carregar dados:', error);
+        }
+    }
+
+    renderizarCategorias() {
+        const filtroCategoria = document.getElementById('filtro-categoria');
+        const categoriaNota = document.getElementById('categoria-nota');
+
+        // Limpar opções existentes (exceto a primeira)
+        while (filtroCategoria.children.length > 1) {
+            filtroCategoria.removeChild(filtroCategoria.lastChild);
+        }
+        while (categoriaNota.children.length > 1) {
+            categoriaNota.removeChild(categoriaNota.lastChild);
+        }
+
+        // Adicionar categorias
+        this.categorias.forEach(categoria => {
+            const option1 = new Option(categoria.nome, categoria.id);
+            const option2 = new Option(categoria.nome, categoria.id);
+
+            filtroCategoria.appendChild(option1);
+            categoriaNota.appendChild(option2);
+        });
+    }
+
+    renderizarNotas(notas = null) {
+        const notasParaRenderizar = notas || this.notas;
+        const gridNotas = document.getElementById('grid-notas');
+        const estadoVazio = document.getElementById('estado-vazio');
+
+        if (notasParaRenderizar.length === 0) {
+            gridNotas.classList.add('hidden');
+            estadoVazio.classList.remove('hidden');
+            return;
+        }
+
+        gridNotas.classList.remove('hidden');
+        estadoVazio.classList.add('hidden');
+
+        gridNotas.innerHTML = notasParaRenderizar.map(nota => `
+            <div class="nota-card bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border-l-4 ${nota.favorita ? 'border-l-yellow-400' : 'border-l-blue-400'}"
+                 style="background-color: ${nota.cor_fundo}"
+                 onclick="notasManager.editarNota(${nota.id})">
+                <div class="p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-semibold text-gray-900 dark:text-white truncate flex-1 mr-2">${nota.titulo}</h3>
+                        <button onclick="notasManager.toggleFavorita(${nota.id}); event.stopPropagation();"
+                                class="text-yellow-500 hover:text-yellow-600 transition-colors ${nota.favorita ? 'text-yellow-500' : 'text-gray-300'}">
+                            <svg class="w-5 h-5" fill="${nota.favorita ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 mb-3">${nota.conteudo}</p>
+                    <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+                        <span>${new Date(nota.data_modificacao).toLocaleDateString('pt-BR')}</span>
+                        ${nota.categoria_obj ? `<span class="px-2 py-1 rounded-full" style="background-color: ${nota.categoria_obj.cor}20; color: ${nota.categoria_obj.cor}">${nota.categoria_obj.nome}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    filtrarNotas(termo) {
+        const notasFiltradas = this.notas.filter(nota =>
+            nota.titulo.toLowerCase().includes(termo.toLowerCase()) ||
+            nota.conteudo.toLowerCase().includes(termo.toLowerCase())
+        );
+        this.renderizarNotas(notasFiltradas);
+    }
+
+    aplicarFiltros() {
+        let notasFiltradas = [...this.notas];
+
+        // Filtro de favoritas
+        if (document.getElementById('mostrar-favoritas').checked) {
+            notasFiltradas = notasFiltradas.filter(nota => nota.favorita);
+        }
+
+        // Filtro de categoria
+        const categoriaId = document.getElementById('filtro-categoria').value;
+        if (categoriaId) {
+            notasFiltradas = notasFiltradas.filter(nota => nota.categoria_id === parseInt(categoriaId));
+        }
+
+        // Ordenação
+        const ordenacao = document.getElementById('ordenacao').value;
+        notasFiltradas.sort((a, b) => {
+            switch (ordenacao) {
+                case 'titulo':
+                    return a.titulo.localeCompare(b.titulo);
+                case 'favorita':
+                    if (a.favorita && !b.favorita) return -1;
+                    if (!a.favorita && b.favorita) return 1;
+                    return new Date(b.data_modificacao) - new Date(a.data_modificacao);
+                case 'data_modificacao':
+                default:
+                    return new Date(b.data_modificacao) - new Date(a.data_modificacao);
+            }
+        });
+
+        this.renderizarNotas(notasFiltradas);
+    }
+
+    abrirModalNota(nota = null) {
+        this.notaAtual = nota;
+        const modal = document.getElementById('modal-nota');
+        const tituloModal = document.getElementById('titulo-modal');
+        const tituloNota = document.getElementById('titulo-nota');
+        const conteudoNota = document.getElementById('conteudo-nota');
+        const categoriaNota = document.getElementById('categoria-nota');
+        const btnFavoritar = document.getElementById('btn-favoritar');
+
+        if (nota) {
+            tituloModal.textContent = 'Editar Nota';
+            tituloNota.value = nota.titulo;
+            conteudoNota.value = nota.conteudo;
+            categoriaNota.value = nota.categoria_id || '';
+            this.selecionarCorFundo(nota.cor_fundo);
+
+            // Atualizar ícone de favorito
+            btnFavoritar.className = nota.favorita ?
+                'text-yellow-500 hover:text-yellow-600 transition-colors' :
+                'text-gray-400 hover:text-yellow-500 transition-colors';
+        } else {
+            tituloModal.textContent = 'Nova Nota';
+            tituloNota.value = '';
+            conteudoNota.value = '';
+            categoriaNota.value = '';
+            this.selecionarCorFundo('#ffffff');
+            btnFavoritar.className = 'text-gray-400 hover:text-yellow-500 transition-colors';
+        }
+
+        this.atualizarContador(conteudoNota.value.length);
+        modal.classList.remove('hidden');
+    }
+
+    fecharModalNota() {
+        document.getElementById('modal-nota').classList.add('hidden');
+        this.notaAtual = null;
+    }
+
+    selecionarCorFundo(cor) {
+        // Remover seleção anterior
+        document.querySelectorAll('[data-cor]').forEach(btn => {
+            btn.classList.remove('border-blue-500');
+            btn.classList.add('border-gray-300');
+        });
+
+        // Selecionar nova cor
+        const botaoSelecionado = document.querySelector(`[data-cor="${cor}"]`);
+        if (botaoSelecionado) {
+            botaoSelecionado.classList.remove('border-gray-300');
+            botaoSelecionado.classList.add('border-blue-500');
+        }
+    }
+
+    atualizarContador(caracteres) {
+        document.getElementById('contador-caracteres').textContent = caracteres;
+    }
+
+    async salvarNota() {
+        const formData = new FormData(document.getElementById('form-nota'));
+        const notaData = {
+            titulo: formData.get('titulo'),
+            conteudo: formData.get('conteudo'),
+            categoria_id: formData.get('categoria_id') || null,
+            cor_fundo: this.getCorFundoSelecionada(),
+            favorita: this.notaAtual ? this.notaAtual.favorita : false
+        };
+
+        try {
+            let response;
+            if (this.notaAtual) {
+                response = await fetch(`/notas/nota/${this.notaAtual.id}/editar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(notaData)
+                });
+            } else {
+                response = await fetch('/notas/nota/nova', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(notaData)
+                });
+            }
+
+            if (response.ok) {
+                this.fecharModalNota();
+                await this.carregarDados();
+                this.aplicarFiltros();
+                alert('Nota salva com sucesso!');
+            } else {
+                alert('Erro ao salvar nota. Tente novamente.');
+            }
+        } catch (error) {
+            console.error('Erro ao salvar nota:', error);
+            alert('Erro ao salvar nota. Tente novamente.');
+        }
+    }
+
+    getCorFundoSelecionada() {
+        const botaoSelecionado = document.querySelector('[data-cor].border-blue-500');
+        return botaoSelecionado ? botaoSelecionado.dataset.cor : '#ffffff';
+    }
+
+    async toggleFavorita(notaId = null) {
+        const nota = notaId ? this.notas.find(n => n.id === notaId) : this.notaAtual;
+        if (!nota) return;
+
+        try {
+            const response = await fetch(`/notas/nota/${nota.id}/favoritar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ favorita: !nota.favorita })
+            });
+
+            if (response.ok) {
+                nota.favorita = !nota.favorita;
+                await this.carregarDados();
+                this.aplicarFiltros();
+
+                // Atualizar ícone no modal se estiver aberto
+                const btnFavoritar = document.getElementById('btn-favoritar');
+                btnFavoritar.className = nota.favorita ?
+                    'text-yellow-500 hover:text-yellow-600 transition-colors' :
+                    'text-gray-400 hover:text-yellow-500 transition-colors';
+            }
+        } catch (error) {
+            console.error('Erro ao favoritar nota:', error);
+        }
+    }
+
+    editarNota(id) {
+        const nota = this.notas.find(n => n.id === id);
+        if (nota) {
+            this.abrirModalNota(nota);
+        }
+    }
+
+    mostrarPreview() {
+        const conteudo = document.getElementById('conteudo-nota').value;
+        const previewConteudo = document.getElementById('preview-conteudo');
+
+        // Converter quebras de linha em <br> e preservar espaços
+        const conteudoFormatado = conteudo
+            .replace(/\n/g, '<br>')
+            .replace(/\s\s/g, '&nbsp;&nbsp;');
+
+        previewConteudo.innerHTML = `<div class="whitespace-pre-wrap">${conteudoFormatado}</div>`;
+        document.getElementById('modal-preview').classList.remove('hidden');
+    }
+
+    fecharPreview() {
+        document.getElementById('modal-preview').classList.add('hidden');
+    }
+
+    abrirModalCategoria() {
+        document.getElementById('modal-categoria').classList.remove('hidden');
+    }
+
+    fecharModalCategoria() {
+        document.getElementById('modal-categoria').classList.add('hidden');
+        document.getElementById('form-categoria').reset();
+    }
+
+    async salvarCategoria() {
+        const formData = new FormData(document.getElementById('form-categoria'));
+        const categoriaData = {
+            nome: formData.get('nome'),
+            cor: formData.get('cor')
+        };
+
+        try {
+            const response = await fetch('/notas/categoria/nova', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(categoriaData)
+            });
+
+            if (response.ok) {
+                this.fecharModalCategoria();
+                await this.carregarDados();
+                alert('Categoria criada com sucesso!');
+            } else {
+                alert('Erro ao criar categoria. Tente novamente.');
+            }
+        } catch (error) {
+            console.error('Erro ao criar categoria:', error);
+            alert('Erro ao criar categoria. Tente novamente.');
+        }
+    }
+}
+
+// Inicializar quando a página carregar
+document.addEventListener('DOMContentLoaded', () => {
+    window.notasManager = new NotasManager();
+});
+</script>
+
+<style>
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
+{% endblock %}

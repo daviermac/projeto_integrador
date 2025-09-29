@@ -840,5 +840,12 @@ def estatisticas():
 def inject_current_year():
     return {'current_year': datetime.now().year}
 
+# Importar e registrar os novos blueprints
+from agenda import agenda_bp
+from notas import notas_bp
+
+app.register_blueprint(agenda_bp, url_prefix='/agenda')
+app.register_blueprint(notas_bp, url_prefix='/notas')
+
 if __name__ == '__main__':
     app.run(debug=True)
