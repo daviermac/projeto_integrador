@@ -159,7 +159,6 @@ class Nota(db.Model):
 
     # Relacionamentos
     usuario = db.relationship('Usuario', backref='notas')
-    categoria_obj = db.relationship('CategoriaNota', backref='notas')
     tarefa = db.relationship('Tarefa', backref='notas')
     versoes = db.relationship('VersaoNota', backref='nota', lazy=True, cascade="all, delete-orphan")
 
