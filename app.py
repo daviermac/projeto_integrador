@@ -28,127 +28,17 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 # Adicionar hasattr ao contexto global do Jinja2
 app.jinja_env.globals['hasattr'] = hasattr
 
-# Inicializar o banco de dados
-db = SQLAlchemy(app)
+# Importar db dos modelos
+from models import db
+db.init_app(app)
+
+# Importar modelos
+from models import Usuario, Tarefa, Evento, Notificacao, CategoriaNota, Nota, VersaoNota, Anexo, Subtarefa, SessaoPomodoro
 
 # Configuração do Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-
-# Modelo de Usuário
-class Usuario(db.Model, UserMixin):
-    __tablename__ = 'usuarios'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    senha_hash = db.Column(db.String(200), nullable=False)
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-    tema = db.Column(db.String(20), default='light')  # Campo para tema (light/dark)
-    config_pomodoro = db.Column(db.String(200), default='{"trabalho": 25, "pausa_curta": 5, "pausa_longa": 15, "ciclos": 4}')  # Configurações do Pomodoro
-    tarefas = db.relationship('Tarefa', backref='usuario', lazy=True, cascade="all, delete-orphan")
-    
-    def set_senha(self, senha):
-        self.senha_hash = generate_password_hash(senha)
-        
-    def verificar_senha(self, senha):
-        return check_password_hash(self.senha_hash, senha)
-    
-    def get_id(self):
-        return str(self.id)
-    
-    def get_config_pomodoro(self):
-        return json.loads(self.config_pomodoro)
-    
-    def set_config_pomodoro(self, config):
-        self.config_pomodoro = json.dumps(config)
-    
-    def __repr__(self):
-        return f'<Usuario {self.nome}>'
-
-# Tabela de anexos
-class Anexo(db.Model):
-    __tablename__ = 'anexos'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    nome_arquivo = db.Column(db.String(255), nullable=False)
-    caminho_arquivo = db.Column(db.String(255), nullable=False)
-    data_upload = db.Column(db.DateTime, default=datetime.utcnow)
-    tarefa_id = db.Column(db.Integer, db.ForeignKey('tarefas.id', ondelete='CASCADE'), nullable=False)
-    
-    def __repr__(self):
-        return f'<Anexo {self.nome_arquivo}>'
-
-# Tabela de subtarefas
-class Subtarefa(db.Model):
-    __tablename__ = 'subtarefas'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    descricao = db.Column(db.String(200), nullable=False)
-    concluida = db.Column(db.Boolean, default=False)
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-    data_conclusao = db.Column(db.DateTime, nullable=True)
-    tarefa_id = db.Column(db.Integer, db.ForeignKey('tarefas.id', ondelete='CASCADE'), nullable=False)
-    
-    def __repr__(self):
-        return f'<Subtarefa {self.id}: {self.descricao}>'
-
-# Tabela de sessões Pomodoro
-class SessaoPomodoro(db.Model):
-    __tablename__ = 'sessoes_pomodoro'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    data_inicio = db.Column(db.DateTime, default=datetime.utcnow)
-    data_fim = db.Column(db.DateTime, nullable=True)
-    duracao_minutos = db.Column(db.Integer, nullable=True)
-    ciclos_completos = db.Column(db.Integer, default=0)
-    tarefa_id = db.Column(db.Integer, db.ForeignKey('tarefas.id'), nullable=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
-    
-    def __repr__(self):
-        return f'<SessaoPomodoro {self.id}: {self.duracao_minutos} minutos>'
-
-class Tarefa(db.Model):
-    __tablename__ = 'tarefas'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    descricao = db.Column(db.String(200), nullable=False)
-    concluida = db.Column(db.Boolean, default=False)
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-    data_conclusao = db.Column(db.DateTime, nullable=True)
-    data_vencimento = db.Column(db.DateTime, nullable=True)  # Data de vencimento
-    prioridade = db.Column(db.String(20), default='normal')  # baixa, normal, alta
-    categoria = db.Column(db.String(50), nullable=True)  # categoria da tarefa (ex: escola, trabalho, pessoal)
-    notas = db.Column(db.Text, nullable=True)  # Notas adicionais
-    status_kanban = db.Column(db.String(20), default='pendente')  # pendente, em_progresso, concluida
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
-    
-    # Relacionamentos
-    subtarefas = db.relationship('Subtarefa', backref='tarefa', lazy=True, cascade="all, delete-orphan")
-    anexos = db.relationship('Anexo', backref='tarefa', lazy=True, cascade="all, delete-orphan")
-    sessoes_pomodoro = db.relationship('SessaoPomodoro', backref='tarefa', lazy=True)
-    
-    def __repr__(self):
-        return f'<Tarefa {self.id}: {self.descricao}>'
-    
-    def esta_atrasada(self):
-        if self.data_vencimento and not self.concluida:
-            return self.data_vencimento < datetime.utcnow()
-        return False
-    
-    def vence_em_breve(self):
-        if self.data_vencimento and not self.concluida:
-            agora = datetime.utcnow()
-            return agora <= self.data_vencimento <= (agora + timedelta(days=3))
-        return False
-    
-    def progresso_subtarefas(self):
-        if not self.subtarefas:
-            return 0
-        total = len(self.subtarefas)
-        concluidas = sum(1 for st in self.subtarefas if st.concluida)
-        return int((concluidas / total) * 100) if total > 0 else 0
 
 # User loader para o Flask-Login
 @login_manager.user_loader
