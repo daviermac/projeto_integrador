@@ -17,6 +17,9 @@ class Usuario(db.Model, UserMixin):
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     tema = db.Column(db.String(20), default='light')  # light, dark
     config_pomodoro = db.Column(db.String(200), default='{"trabalho": 25, "pausa_curta": 5, "pausa_longa": 15, "ciclos": 4}')
+    titulo_pendente = db.Column(db.String(50), default='Pendentes')
+    titulo_em_progresso = db.Column(db.String(50), default='Em Progresso')
+    titulo_concluida = db.Column(db.String(50), default='Concluídas')
     tarefas = db.relationship('Tarefa', backref='usuario', lazy=True, cascade="all, delete-orphan")
 
     def set_senha(self, senha):
@@ -165,22 +168,6 @@ class Notificacao(db.Model):
     def __repr__(self):
         return f'<Notificacao {self.id}: {self.titulo}>'
 
-# Modelo para Gerenciador de Textos/Notas
-class CategoriaNota(db.Model):
-    __tablename__ = 'categorias_notas'
-
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(50), nullable=False)
-    cor = db.Column(db.String(7), default='#6b7280')  # cor da categoria
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
-
-    # Relacionamentos
-    usuario = db.relationship('Usuario', backref='categorias_notas')
-    notas = db.relationship('Nota', backref='categoria_obj', lazy=True, cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f'<CategoriaNota {self.id}: {self.nome}>'
-
 class Nota(db.Model):
     __tablename__ = 'notas'
 
@@ -193,7 +180,6 @@ class Nota(db.Model):
     favorita = db.Column(db.Boolean, default=False)
     cor_fundo = db.Column(db.String(7), default='#ffffff')  # cor de fundo da nota
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
-    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_notas.id'), nullable=True)
     tarefa_id = db.Column(db.Integer, db.ForeignKey('tarefas.id'), nullable=True)  # link com tarefa se aplicável
 
     # Relacionamentos

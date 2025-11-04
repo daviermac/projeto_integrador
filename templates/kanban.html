@@ -30,13 +30,18 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Coluna: Pendentes -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 group">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Pendentes
+                    <span class="column-title" data-column="pendente">{{ current_user.titulo_pendente or 'Pendentes' }}</span>
+                    <button class="edit-column-btn ml-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" data-column="pendente">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                    </button>
                 </h2>
                 <span class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
                     {{ tarefas_pendentes|length }}
@@ -120,13 +125,18 @@
         </div>
         
         <!-- Coluna: Em Progresso -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 group">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    Em Progresso
+                    <span class="column-title" data-column="em_progresso">{{ current_user.titulo_em_progresso or 'Em Progresso' }}</span>
+                    <button class="edit-column-btn ml-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" data-column="em_progresso">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                    </button>
                 </h2>
                 <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
                     {{ tarefas_em_progresso|length }}
@@ -210,13 +220,18 @@
         </div>
         
         <!-- Coluna: Concluídas -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 group">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    Concluídas
+                    <span class="column-title" data-column="concluida">{{ current_user.titulo_concluida or 'Concluídas' }}</span>
+                    <button class="edit-column-btn ml-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" data-column="concluida">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                    </button>
                 </h2>
                 <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
                     {{ tarefas_concluidas|length }}
@@ -280,7 +295,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Inicializar Sortable para cada coluna
         const columns = document.querySelectorAll('.kanban-column');
-        
+
         columns.forEach(column => {
             new Sortable(column, {
                 group: 'tarefas',
@@ -289,11 +304,11 @@
                 onEnd: function(evt) {
                     const tarefaId = evt.item.dataset.id;
                     const novoStatus = evt.to.id.split('-')[0]; // Extrair status do ID da coluna
-                    
+
                     // Atualizar o status da tarefa via AJAX
                     // Corrigido para não usar concatenação com string vazia
                     const url = `/atualizar_status_kanban/${tarefaId}`;
-                    
+
                     fetch(url, {
                         method: 'POST',
                         headers: {
@@ -313,7 +328,7 @@
                         } else {
                             // Atualizar o atributo data-status do item
                             evt.item.dataset.status = novoStatus;
-                            
+
                             // Atualizar contadores
                             atualizarContadores();
                         }
@@ -326,20 +341,57 @@
                 }
             });
         });
-        
+
         function atualizarContadores() {
             const pendenteCount = document.querySelectorAll('#pendente-column .kanban-card').length;
             const emProgressoCount = document.querySelectorAll('#em_progresso-column .kanban-card').length;
             const concluidaCount = document.querySelectorAll('#concluida-column .kanban-card').length;
-            
+
             const pendenteSpan = document.querySelector('h2:nth-child(1) + span');
             const emProgressoSpan = document.querySelector('h2:nth-child(1) + span');
             const concluidaSpan = document.querySelector('h2:nth-child(1) + span');
-            
+
             if (pendenteSpan) pendenteSpan.textContent = pendenteCount;
             if (emProgressoSpan) emProgressoSpan.textContent = emProgressoCount;
             if (concluidaSpan) concluidaSpan.textContent = concluidaCount;
         }
+
+        // Função para editar títulos das colunas
+        document.querySelectorAll('.edit-column-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const column = this.dataset.column;
+                const span = this.previousElementSibling;
+                const currentTitle = span.textContent;
+
+                const newTitle = prompt('Digite o novo título para a coluna:', currentTitle);
+                if (newTitle && newTitle.trim() !== currentTitle) {
+                    // Enviar requisição AJAX para atualizar o título
+                    fetch('/atualizar_titulo_coluna', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            'coluna': column,
+                            'titulo': newTitle.trim()
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            span.textContent = newTitle.trim();
+                        } else {
+                            alert(data.message || 'Erro ao atualizar título da coluna');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        alert('Erro ao atualizar título da coluna');
+                    });
+                }
+            });
+        });
     });
 </script>
 {% endblock %}

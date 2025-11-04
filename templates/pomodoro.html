@@ -1,448 +1,374 @@
 {% extends "base.html" %}
 
-{% block title %}Pomodoro - Gerenciador de Tarefas Escolares{% endblock %}
+{% block title %}Pomodoro Timer{% endblock %}
+
+{% block head_extra %}
+<style>
+    .timer-display {
+        font-family: 'Inter', monospace;
+        font-size: 4rem;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+
+    .progress-ring__circle {
+        transition: stroke-dasharray 0.35s;
+        stroke: #3b82f6;
+        stroke-linecap: round;
+    }
+
+    .progress-ring__background {
+        stroke: #e5e7eb;
+    }
+
+    .dark .progress-ring__background {
+        stroke: #374151;
+    }
+
+    .pomodoro-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .break-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .long-break-card {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="mb-8">
-    <div class="bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl shadow-lg p-6 mb-6 text-white">
-        <div class="flex flex-col md:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-bold mb-2">Timer Pomodoro</h1>
-                <p class="text-blue-100">Gerencie seu tempo de estudo com a técnica Pomodoro</p>
+<div class="max-w-4xl mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Técnica Pomodoro</h1>
+        <p class="text-gray-600 dark:text-gray-400">Aumente sua produtividade com sessões focadas de trabalho</p>
+    </div>
+
+    <!-- Timer Principal -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <div class="text-center">
+            <div class="relative inline-block mb-6">
+                <svg class="progress-ring w-64 h-64" viewBox="0 0 100 100">
+                    <circle class="progress-ring__background" cx="50" cy="50" r="45" stroke-width="8" fill="transparent"></circle>
+                    <circle class="progress-ring__circle" cx="50" cy="50" r="45" stroke-width="8" fill="transparent"
+                            stroke-dasharray="283" stroke-dashoffset="0"></circle>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="timer-display text-blue-600 dark:text-blue-400" id="timer">25:00</div>
+                </div>
             </div>
-            <div class="mt-4 md:mt-0">
-                <a 
-                    href="{{ url_for('index') }}" 
-                    class="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                    Voltar para Tarefas
-                </a>
+
+            <div class="mb-6">
+                <p class="text-lg font-medium text-gray-700 dark:text-gray-300" id="session-type">Sessão de Trabalho</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400" id="cycles">Ciclo 1 de 4</p>
+            </div>
+
+            <div class="flex justify-center space-x-4 mb-6">
+                <button id="start-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                    Iniciar
+                </button>
+                <button id="pause-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors" disabled>
+                    Pausar
+                </button>
+                <button id="reset-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                    Resetar
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="pomodoro-card text-white p-4 rounded-lg">
+                    <h3 class="font-semibold mb-2">Trabalho</h3>
+                    <p class="text-sm opacity-90" id="work-duration">25 minutos</p>
+                </div>
+                <div class="break-card text-white p-4 rounded-lg">
+                    <h3 class="font-semibold mb-2">Pausa Curta</h3>
+                    <p class="text-sm opacity-90" id="short-break-duration">5 minutos</p>
+                </div>
+                <div class="long-break-card text-white p-4 rounded-lg">
+                    <h3 class="font-semibold mb-2">Pausa Longa</h3>
+                    <p class="text-sm opacity-90" id="long-break-duration">15 minutos</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Timer Pomodoro -->
-        <div class="md:col-span-2">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                <div class="flex flex-col items-center">
-                    <div class="mb-6 relative">
-                        <svg class="progress-ring" width="300" height="300">
-                            <circle class="progress-ring-circle-bg" stroke="#e5e7eb" stroke-width="8" fill="transparent" r="120" cx="150" cy="150"></circle>
-                            <circle id="progress-ring-circle" class="progress-ring-circle" stroke="#3b82f6" stroke-width="8" fill="transparent" r="120" cx="150" cy="150" stroke-dasharray="754" stroke-dashoffset="754"></circle>
-                        </svg>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <div class="text-center">
-                                <div id="timer-display" class="timer-display text-gray-800 dark:text-gray-200">25:00</div>
-                                <div id="timer-label" class="text-sm font-medium text-gray-500 dark:text-gray-400">Trabalho</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex gap-4 mb-6">
-                        <button id="start-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                            Iniciar
-                        </button>
-                        <button id="pause-btn" class="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-colors hidden">
-                            Pausar
-                        </button>
-                        <button id="resume-btn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors hidden">
-                            Continuar
-                        </button>
-                        <button id="reset-btn" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">
-                            Reiniciar
-                        </button>
-                    </div>
-                    
-                    <div class="w-full max-w-md">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Ciclo:</span>
-                            <span id="cycle-display" class="text-sm font-medium text-gray-700 dark:text-gray-300">1/{{ config.ciclos }}</span>
-                        </div>
-                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                            <div id="cycle-progress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-8">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">Configurações</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="trabalho-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempo de Trabalho (minutos)</label>
-                            <input type="number" id="trabalho-time" min="1" max="60" value="{{ config.trabalho }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label for="pausa-curta-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pausa Curta (minutos)</label>
-                            <input type="number" id="pausa-curta-time" min="1" max="30" value="{{ config.pausa_curta }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label for="pausa-longa-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pausa Longa (minutos)</label>
-                            <input type="number" id="pausa-longa-time" min="1" max="60" value="{{ config.pausa_longa }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label for="ciclos-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ciclos até Pausa Longa</label>
-                            <input type="number" id="ciclos-count" min="1" max="10" value="{{ config.ciclos }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-                    <button id="save-config-btn" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                        Salvar Configurações
-                    </button>
-                </div>
+    <!-- Configurações -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Configurações</h2>
+        <form id="config-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Trabalho (min)</label>
+                <input type="number" id="work-time" min="1" max="60" value="25" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md">
             </div>
-        </div>
-        
-        <!-- Tarefas Pendentes -->
-        <div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">Selecione uma Tarefa (opcional)</h3>
-                
-                <div class="mb-4">
-                    <label for="tarefa-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tarefa Atual</label>
-                    <select id="tarefa-select" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">Nenhuma tarefa selecionada</option>
-                        {% for tarefa in tarefas %}
-                        <option value="{{ tarefa.id }}">{{ tarefa.descricao }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="space-y-4 mt-6">
-                    <h4 class="font-medium text-gray-700 dark:text-gray-300">Tarefas Pendentes</h4>
-                    
-                    {% if tarefas %}
-                    <div class="max-h-96 overflow-y-auto pr-2">
-                        {% for tarefa in tarefas %}
-                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mb-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors tarefa-item" data-id="{{ tarefa.id }}">
-                            <div class="flex justify-between items-start">
-                                <h5 class="font-medium text-gray-800 dark:text-gray-200">{{ tarefa.descricao }}</h5>
-                                <span class="px-2 py-1 text-xs rounded-full
-                                    {% if tarefa.prioridade == 'alta' %}
-                                        bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
-                                    {% elif tarefa.prioridade == 'baixa' %}
-                                        bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
-                                    {% else %}
-                                        bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200
-                                    {% endif %}
-                                ">
-                                    {{ tarefa.prioridade }}
-                                </span>
-                            </div>
-                            
-                            {% if tarefa.data_vencimento %}
-                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Vence em: {{ tarefa.data_vencimento.strftime('%d/%m/%Y') }}
-                            </div>
-                            {% endif %}
-                            
-                            {% if tarefa.subtarefas %}
-                            <div class="mt-2">
-                                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                    <span>Progresso</span>
-                                    <span>{{ tarefa.progresso_subtarefas() }}%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
-                                    <div class="bg-blue-600 h-1.5 rounded-full" style="width: {{ tarefa.progresso_subtarefas() }}%"></div>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <p>Nenhuma tarefa pendente</p>
-                    </div>
-                    {% endif %}
-                </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pausa Curta (min)</label>
+                <input type="number" id="short-break" min="1" max="30" value="5" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md">
             </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pausa Longa (min)</label>
+                <input type="number" id="long-break" min="1" max="60" value="15" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ciclos</label>
+                <input type="number" id="cycles-count" min="1" max="10" value="4" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-md">
+            </div>
+        </form>
+        <button id="save-config" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            Salvar Configurações
+        </button>
+    </div>
+
+    <!-- Histórico de Sessões -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Histórico de Sessões</h2>
+        <div id="sessions-history" class="space-y-2">
+            <!-- Sessões serão carregadas aqui -->
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Elementos do DOM
-        const timerDisplay = document.getElementById('timer-display');
-        const timerLabel = document.getElementById('timer-label');
-        const startBtn = document.getElementById('start-btn');
-        const pauseBtn = document.getElementById('pause-btn');
-        const resumeBtn = document.getElementById('resume-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const cycleDisplay = document.getElementById('cycle-display');
-        const cycleProgress = document.getElementById('cycle-progress');
-        const progressRing = document.getElementById('progress-ring-circle');
-        const tarefaSelect = document.getElementById('tarefa-select');
-        
-        // Configurações
-        const trabalhoTimeInput = document.getElementById('trabalho-time');
-        const pausaCurtaTimeInput = document.getElementById('pausa-curta-time');
-        const pausaLongaTimeInput = document.getElementById('pausa-longa-time');
-        const ciclosCountInput = document.getElementById('ciclos-count');
-        const saveConfigBtn = document.getElementById('save-config-btn');
-        
-        // Variáveis do timer
-        let timer;
-        let timerRunning = false;
-        let timerPaused = false;
-        let currentMode = 'trabalho'; // trabalho, pausa_curta, pausa_longa
-        let currentCycle = 1;
-        let totalCycles = {{ config.ciclos }};
-        let timeLeft = {{ config.trabalho }} * 60; // em segundos
-        let totalTime = timeLeft;
-        let startTime;
-        let elapsedTime = 0;
-        
-        // Configurações do timer
-        let config = {
-            trabalho: {{ config.trabalho }},
-            pausa_curta: {{ config.pausa_curta }},
-            pausa_longa: {{ config.pausa_longa }},
-            ciclos: {{ config.ciclos }}
-        };
-        
-        // Atualizar o timer display
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            // Atualizar o círculo de progresso
-            const circumference = 2 * Math.PI * 120;
-            const offset = circumference - (timeLeft / totalTime) * circumference;
-            progressRing.style.strokeDashoffset = offset;
-            
-            // Atualizar o display de ciclos
-            cycleDisplay.textContent = `${currentCycle}/${totalCycles}`;
-            cycleProgress.style.width = `${(currentCycle / totalCycles) * 100}%`;
+let timer;
+let timeLeft;
+let isRunning = false;
+let isPaused = false;
+let currentSession = 'work'; // work, short-break, long-break
+let currentCycle = 1;
+let completedCycles = 0;
+
+const config = {
+    work: 25 * 60,
+    shortBreak: 5 * 60,
+    longBreak: 15 * 60,
+    cycles: 4
+};
+
+// Carregar configurações do usuário
+async function loadConfig() {
+    try {
+        const response = await fetch('/get_pomodoro_config');
+        if (response.ok) {
+            const userConfig = await response.json();
+            config.work = userConfig.trabalho * 60;
+            config.shortBreak = userConfig.pausa_curta * 60;
+            config.longBreak = userConfig.pausa_longa * 60;
+            config.cycles = userConfig.ciclos;
+            updateDisplay();
         }
-        
-        // Iniciar o timer
-        function startTimer() {
-            if (timerRunning) return;
-            
-            timerRunning = true;
-            timerPaused = false;
-            startTime = Date.now() - elapsedTime;
-            
-            startBtn.classList.add('hidden');
-            pauseBtn.classList.remove('hidden');
-            resumeBtn.classList.add('hidden');
-            
-            timer = setInterval(function() {
-                elapsedTime = Date.now() - startTime;
-                timeLeft = Math.max(0, totalTime - Math.floor(elapsedTime / 1000));
-                
-                updateTimerDisplay();
-                
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    timerRunning = false;
-                    playAlertSound();
-                    
-                    // Mudar para o próximo modo
-                    if (currentMode === 'trabalho') {
-                        // Verificar se é hora de uma pausa longa
-                        if (currentCycle % totalCycles === 0) {
-                            currentMode = 'pausa_longa';
-                            timerLabel.textContent = 'Pausa Longa';
-                            timeLeft = config.pausa_longa * 60;
-                        } else {
-                            currentMode = 'pausa_curta';
-                            timerLabel.textContent = 'Pausa Curta';
-                            timeLeft = config.pausa_curta * 60;
-                        }
-                    } else {
-                        // Se estávamos em uma pausa, voltar para o trabalho
-                        if (currentMode === 'pausa_longa' || currentMode === 'pausa_curta') {
-                            // Incrementar o ciclo apenas após uma pausa
-                            if (currentMode === 'pausa_curta') {
-                                currentCycle++;
-                            }
-                            
-                            currentMode = 'trabalho';
-                            timerLabel.textContent = 'Trabalho';
-                            timeLeft = config.trabalho * 60;
-                            
-                            // Registrar a sessão concluída
-                            if (currentMode === 'trabalho') {
-                                registrarSessao();
-                            }
-                        }
-                    }
-                    
-                    totalTime = timeLeft;
-                    elapsedTime = 0;
-                    updateTimerDisplay();
-                    
-                    // Mostrar botão de iniciar
-                    startBtn.classList.remove('hidden');
-                    pauseBtn.classList.add('hidden');
-                    resumeBtn.classList.add('hidden');
-                }
-            }, 100);
-        }
-        
-        // Pausar o timer
-        function pauseTimer() {
-            if (!timerRunning || timerPaused) return;
-            
-            clearInterval(timer);
-            timerPaused = true;
-            timerRunning = false;
-            
-            pauseBtn.classList.add('hidden');
-            resumeBtn.classList.remove('hidden');
-        }
-        
-        // Continuar o timer
-        function resumeTimer() {
-            if (timerRunning || !timerPaused) return;
-            
-            startTime = Date.now() - elapsedTime;
-            timerPaused = false;
-            
-            startTimer();
-        }
-        
-        // Reiniciar o timer
-        function resetTimer() {
-            clearInterval(timer);
-            timerRunning = false;
-            timerPaused = false;
-            
-            currentMode = 'trabalho';
-            timerLabel.textContent = 'Trabalho';
-            timeLeft = config.trabalho * 60;
-            totalTime = timeLeft;
-            elapsedTime = 0;
-            
-            startBtn.classList.remove('hidden');
-            pauseBtn.classList.add('hidden');
-            resumeBtn.classList.add('hidden');
-            
-            updateTimerDisplay();
-        }
-        
-        // Tocar som de alerta
-        function playAlertSound() {
-            const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
-            audio.play();
-        }
-        
-        // Registrar sessão concluída
-        function registrarSessao() {
-            const tarefaId = tarefaSelect.value;
-            const duracao = config.trabalho * 60; // duração em segundos
-            
-            fetch('{{ url_for("registrar_sessao_pomodoro") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: new URLSearchParams({
-                    'duracao': duracao,
-                    'ciclos': 1,
-                    'tarefa_id': tarefaId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success) {
-                    console.error('Erro ao registrar sessão:', data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-            });
-        }
-        
-        // Salvar configurações
-        function saveConfig() {
-            const trabalho = parseInt(trabalhoTimeInput.value) || 25;
-            const pausaCurta = parseInt(pausaCurtaTimeInput.value) || 5;
-            const pausaLonga = parseInt(pausaLongaTimeInput.value) || 15;
-            const ciclos = parseInt(ciclosCountInput.value) || 4;
-            
-            config = {
-                trabalho: trabalho,
-                pausa_curta: pausaCurta,
-                pausa_longa: pausaLonga,
-                ciclos: ciclos
-            };
-            
-            totalCycles = ciclos;
-            
-            // Atualizar o timer se não estiver rodando
-            if (!timerRunning) {
-                if (currentMode === 'trabalho') {
-                    timeLeft = trabalho * 60;
-                } else if (currentMode === 'pausa_curta') {
-                    timeLeft = pausaCurta * 60;
-                } else if (currentMode === 'pausa_longa') {
-                    timeLeft = pausaLonga * 60;
-                }
-                
-                totalTime = timeLeft;
-                updateTimerDisplay();
-            }
-            
-            // Salvar configurações no servidor
-            fetch('{{ url_for("salvar_config_pomodoro") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: new URLSearchParams({
-                    'trabalho': trabalho,
-                    'pausa_curta': pausaCurta,
-                    'pausa_longa': pausaLonga,
-                    'ciclos': ciclos
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Configurações salvas com sucesso!');
-                } else {
-                    alert(data.message || 'Erro ao salvar configurações');
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro ao salvar configurações');
-            });
-        }
-        
-        // Event listeners
-        startBtn.addEventListener('click', startTimer);
-        pauseBtn.addEventListener('click', pauseTimer);
-        resumeBtn.addEventListener('click', resumeTimer);
-        resetBtn.addEventListener('click', resetTimer);
-        saveConfigBtn.addEventListener('click', saveConfig);
-        
-        // Selecionar tarefa ao clicar
-        document.querySelectorAll('.tarefa-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const tarefaId = this.dataset.id;
-                tarefaSelect.value = tarefaId;
-            });
+    } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+    }
+}
+
+// Salvar configurações
+async function saveConfig() {
+    const newConfig = {
+        trabalho: parseInt(document.getElementById('work-time').value),
+        pausa_curta: parseInt(document.getElementById('short-break').value),
+        pausa_longa: parseInt(document.getElementById('long-break').value),
+        ciclos: parseInt(document.getElementById('cycles-count').value)
+    };
+
+    try {
+        const response = await fetch('/update_pomodoro_config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newConfig)
         });
-        
-        // Inicializar o display do timer
-        updateTimerDisplay();
-        
-        // Configurar o círculo de progresso
-        const circumference = 2 * Math.PI * 120;
-        progressRing.style.strokeDasharray = circumference;
-        progressRing.style.strokeDashoffset = circumference;
-    });
+
+        if (response.ok) {
+            config.work = newConfig.trabalho * 60;
+            config.shortBreak = newConfig.pausa_curta * 60;
+            config.longBreak = newConfig.pausa_longa * 60;
+            config.cycles = newConfig.ciclos;
+            updateDisplay();
+            alert('Configurações salvas com sucesso!');
+        } else {
+            alert('Erro ao salvar configurações.');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao salvar configurações.');
+    }
+}
+
+function updateDisplay() {
+    document.getElementById('work-duration').textContent = `${config.work / 60} minutos`;
+    document.getElementById('short-break-duration').textContent = `${config.shortBreak / 60} minutos`;
+    document.getElementById('long-break-duration').textContent = `${config.longBreak / 60} minutos`;
+    document.getElementById('cycles').textContent = `Ciclo ${currentCycle} de ${config.cycles}`;
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+function updateTimer() {
+    document.getElementById('timer').textContent = formatTime(timeLeft);
+    updateProgress();
+
+    if (timeLeft <= 0) {
+        completeSession();
+    } else {
+        timeLeft--;
+    }
+}
+
+function updateProgress() {
+    const circle = document.querySelector('.progress-ring__circle');
+    const radius = 45;
+    const circumference = 2 * Math.PI * radius;
+
+    let totalTime;
+    if (currentSession === 'work') totalTime = config.work;
+    else if (currentSession === 'short-break') totalTime = config.shortBreak;
+    else totalTime = config.longBreak;
+
+    const progress = (totalTime - timeLeft) / totalTime;
+    const offset = circumference - (progress * circumference);
+    circle.style.strokeDashoffset = offset;
+}
+
+function completeSession() {
+    clearInterval(timer);
+    isRunning = false;
+
+    // Salvar sessão no banco
+    saveSession();
+
+    // Notificação
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Pomodoro Timer', {
+            body: currentSession === 'work' ? 'Sessão de trabalho concluída!' : 'Pausa concluída!',
+            icon: '/static/favicon.ico'
+        });
+    }
+
+    // Próxima sessão
+    if (currentSession === 'work') {
+        completedCycles++;
+        if (completedCycles % config.cycles === 0) {
+            currentSession = 'long-break';
+            timeLeft = config.longBreak;
+            document.getElementById('session-type').textContent = 'Pausa Longa';
+        } else {
+            currentSession = 'short-break';
+            timeLeft = config.shortBreak;
+            document.getElementById('session-type').textContent = 'Pausa Curta';
+        }
+    } else {
+        currentSession = 'work';
+        timeLeft = config.work;
+        document.getElementById('session-type').textContent = 'Sessão de Trabalho';
+        if (currentSession === 'work') {
+            currentCycle = Math.floor(completedCycles / config.cycles) + 1;
+        }
+    }
+
+    updateDisplay();
+    updateButtons();
+}
+
+async function saveSession() {
+    try {
+        const duration = currentSession === 'work' ? config.work / 60 : (currentSession === 'short-break' ? config.shortBreak / 60 : config.longBreak / 60);
+        await fetch('/save_pomodoro_session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                duracao_minutos: duration,
+                ciclos_completos: completedCycles
+            })
+        });
+    } catch (error) {
+        console.error('Erro ao salvar sessão:', error);
+    }
+}
+
+function updateButtons() {
+    const startBtn = document.getElementById('start-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+
+    if (isRunning) {
+        startBtn.disabled = true;
+        pauseBtn.disabled = false;
+        startBtn.textContent = 'Executando...';
+    } else {
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        startBtn.textContent = 'Iniciar';
+    }
+
+    if (isPaused) {
+        pauseBtn.textContent = 'Continuar';
+    } else {
+        pauseBtn.textContent = 'Pausar';
+    }
+}
+
+function startTimer() {
+    if (!isRunning) {
+        isRunning = true;
+        isPaused = false;
+        timer = setInterval(updateTimer, 1000);
+    }
+    updateButtons();
+}
+
+function pauseTimer() {
+    if (isRunning) {
+        isPaused = !isPaused;
+        if (isPaused) {
+            clearInterval(timer);
+        } else {
+            timer = setInterval(updateTimer, 1000);
+        }
+    }
+    updateButtons();
+}
+
+function resetTimer() {
+    clearInterval(timer);
+    isRunning = false;
+    isPaused = false;
+    currentSession = 'work';
+    currentCycle = 1;
+    completedCycles = 0;
+    timeLeft = config.work;
+    document.getElementById('session-type').textContent = 'Sessão de Trabalho';
+    updateDisplay();
+    updateButtons();
+    updateTimer();
+}
+
+// Event listeners
+document.getElementById('start-btn').addEventListener('click', startTimer);
+document.getElementById('pause-btn').addEventListener('click', pauseTimer);
+document.getElementById('reset-btn').addEventListener('click', resetTimer);
+document.getElementById('save-config').addEventListener('click', saveConfig);
+
+// Solicitar permissão para notificações
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+// Inicialização
+loadConfig();
+resetTimer();
 </script>
 {% endblock %}

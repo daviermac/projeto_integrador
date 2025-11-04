@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
@@ -33,7 +34,10 @@ from models import db
 db.init_app(app)
 
 # Importar modelos
-from models import Usuario, Tarefa, Evento, Notificacao, CategoriaNota, Nota, VersaoNota, Anexo, Subtarefa, SessaoPomodoro
+from models import Usuario, Tarefa, Evento, Notificacao, Nota, VersaoNota, Anexo, Subtarefa, SessaoPomodoro
+
+# Configuração do CSRF
+csrf = CSRFProtect(app)
 
 # Configuração do Flask-Login
 login_manager = LoginManager()
@@ -85,6 +89,22 @@ def verificar_e_atualizar_schema():
         if 'status_kanban' not in [col['name'] for col in inspector.get_columns('tarefas')]:
             print("Adicionando coluna 'status_kanban' à tabela 'tarefas'")
             db.session.execute(text("ALTER TABLE tarefas ADD COLUMN status_kanban VARCHAR(20) DEFAULT 'pendente'"))
+            db.session.commit()
+
+        # Verificar e adicionar colunas de títulos das colunas Kanban na tabela 'usuarios'
+        if 'titulo_pendente' not in [col['name'] for col in inspector.get_columns('usuarios')]:
+            print("Adicionando coluna 'titulo_pendente' à tabela 'usuarios'")
+            db.session.execute(text("ALTER TABLE usuarios ADD COLUMN titulo_pendente VARCHAR(50) DEFAULT 'Pendentes'"))
+            db.session.commit()
+
+        if 'titulo_em_progresso' not in [col['name'] for col in inspector.get_columns('usuarios')]:
+            print("Adicionando coluna 'titulo_em_progresso' à tabela 'usuarios'")
+            db.session.execute(text("ALTER TABLE usuarios ADD COLUMN titulo_em_progresso VARCHAR(50) DEFAULT 'Em Progresso'"))
+            db.session.commit()
+
+        if 'titulo_concluida' not in [col['name'] for col in inspector.get_columns('usuarios')]:
+            print("Adicionando coluna 'titulo_concluida' à tabela 'usuarios'")
+            db.session.execute(text("ALTER TABLE usuarios ADD COLUMN titulo_concluida VARCHAR(50) DEFAULT 'Concluídas'"))
             db.session.commit()
 
 # Criar as tabelas do banco de dados e verificar o schema
@@ -492,20 +512,20 @@ def deletar_anexo(id):
 @login_required
 def kanban():
     tarefas_pendentes = Tarefa.query.filter_by(
-        usuario_id=current_user.id, 
+        usuario_id=current_user.id,
         status_kanban='pendente'
     ).order_by(Tarefa.prioridade.desc(), Tarefa.data_criacao.desc()).all()
-    
+
     tarefas_em_progresso = Tarefa.query.filter_by(
-        usuario_id=current_user.id, 
+        usuario_id=current_user.id,
         status_kanban='em_progresso'
     ).order_by(Tarefa.prioridade.desc(), Tarefa.data_criacao.desc()).all()
-    
+
     tarefas_concluidas = Tarefa.query.filter_by(
-        usuario_id=current_user.id, 
+        usuario_id=current_user.id,
         status_kanban='concluida'
     ).order_by(Tarefa.data_conclusao.desc()).all()
-    
+
     return render_template(
         'kanban.html',
         tarefas_pendentes=tarefas_pendentes,
@@ -514,6 +534,31 @@ def kanban():
         current_user=current_user,
         current_year=datetime.now().year
     )
+
+@app.route('/editar_titulo_coluna', methods=['POST'])
+@login_required
+def editar_titulo_coluna():
+    coluna = request.form.get('coluna')
+    novo_titulo = request.form.get('titulo')
+
+    if coluna not in ['pendente', 'em_progresso', 'concluida']:
+        return jsonify({'success': False, 'message': 'Coluna inválida'})
+
+    if not novo_titulo or len(novo_titulo.strip()) == 0:
+        return jsonify({'success': False, 'message': 'Título não pode estar vazio'})
+
+    novo_titulo = novo_titulo.strip()
+
+    if coluna == 'pendente':
+        current_user.titulo_pendente = novo_titulo
+    elif coluna == 'em_progresso':
+        current_user.titulo_em_progresso = novo_titulo
+    elif coluna == 'concluida':
+        current_user.titulo_concluida = novo_titulo
+
+    db.session.commit()
+
+    return jsonify({'success': True, 'titulo': novo_titulo})
 
 @app.route('/atualizar_status_kanban/<int:id>', methods=['POST'])
 @login_required
@@ -730,12 +775,151 @@ def estatisticas():
 def inject_current_year():
     return {'current_year': datetime.now().year}
 
-# Importar e registrar os novos blueprints
-from agenda import agenda_bp
-from notas import notas_bp
 
-app.register_blueprint(agenda_bp, url_prefix='/agenda')
-app.register_blueprint(notas_bp, url_prefix='/notas')
+
+# Adicionar estas rotas ao final do arquivo app.py, antes do if __name__ == '__main__':
+
+# Rotas para Notas
+@app.route('/notas')
+@login_required
+def notas():
+    notas_usuario = Nota.query.filter_by(usuario_id=current_user.id).order_by(Nota.data_criacao.desc()).all()
+    return render_template('notas.html', notas=notas_usuario, current_user=current_user, current_year=datetime.now().year)
+
+@app.route('/criar_nota', methods=['POST'])
+@login_required
+def criar_nota():
+    titulo = request.form.get('titulo')
+    conteudo = request.form.get('conteudo')
+
+    if not titulo:
+        flash('O título da nota não pode estar vazio!', 'error')
+        return redirect(url_for('notas'))
+
+    nova_nota = Nota(
+        titulo=titulo,
+        conteudo=conteudo or '',
+        usuario_id=current_user.id
+    )
+    db.session.add(nova_nota)
+    db.session.commit()
+
+    flash('Nota criada com sucesso!', 'success')
+    return redirect(url_for('notas'))
+
+@app.route('/editar_nota/<int:id>', methods=['GET', 'POST'])
+@login_required
+def editar_nota(id):
+    nota = Nota.query.get(id)
+
+    if not nota or nota.usuario_id != current_user.id:
+        flash('Nota não encontrada ou você não tem permissão para editar!', 'error')
+        return redirect(url_for('notas'))
+
+    if request.method == 'POST':
+        titulo = request.form.get('titulo')
+        conteudo = request.form.get('conteudo')
+
+        if not titulo:
+            flash('O título da nota não pode estar vazio!', 'error')
+            return render_template('notas.html', nota=nota, editando=True)
+
+        nota.titulo = titulo
+        nota.conteudo = conteudo or ''
+        db.session.commit()
+
+        flash('Nota atualizada com sucesso!', 'success')
+        return redirect(url_for('notas'))
+
+    return render_template('notas.html', nota=nota, editando=True, current_user=current_user, current_year=datetime.now().year)
+
+@app.route('/deletar_nota/<int:id>', methods=['POST'])
+@login_required
+def deletar_nota(id):
+    nota = Nota.query.get(id)
+    if nota and nota.usuario_id == current_user.id:
+        db.session.delete(nota)
+        db.session.commit()
+        flash('Nota deletada com sucesso!', 'success')
+    else:
+        flash('Nota não encontrada ou você não tem permissão para deletar!', 'error')
+
+    return redirect(url_for('notas'))
+
+
+# Rotas para Agenda
+@app.route('/agenda')
+@login_required
+def agenda():
+    eventos_usuario = Evento.query.filter_by(usuario_id=current_user.id).order_by(Evento.data_inicio.desc()).all()
+
+    # Converter eventos para formato JSON do FullCalendar
+    eventos_json = []
+    for evento in eventos_usuario:
+        evento_dict = {
+            'id': evento.id,
+            'title': evento.titulo,
+            'start': evento.data_inicio.isoformat(),
+            'extendedProps': {
+                'local': evento.local,
+                'descricao': evento.descricao
+            }
+        }
+        if evento.data_fim:
+            evento_dict['end'] = evento.data_fim.isoformat()
+        eventos_json.append(evento_dict)
+
+    return render_template('agenda.html', eventos=eventos_usuario, eventos_json=eventos_json, current_user=current_user, current_year=datetime.now().year)
+
+@app.route('/criar_evento', methods=['POST'])
+@login_required
+def criar_evento():
+    titulo = request.form.get('titulo')
+    descricao = request.form.get('descricao')
+    data_inicio_str = request.form.get('data_inicio')
+    data_fim_str = request.form.get('data_fim')
+    local = request.form.get('local')
+
+    if not titulo or not data_inicio_str:
+        flash('Título e data de início são obrigatórios!', 'error')
+        return redirect(url_for('agenda'))
+
+    try:
+        data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%dT%H:%M')
+        data_fim = None
+        if data_fim_str:
+            data_fim = datetime.strptime(data_fim_str, '%Y-%m-%dT%H:%M')
+    except ValueError:
+        flash('Formato de data inválido!', 'error')
+        return redirect(url_for('agenda'))
+
+    novo_evento = Evento(
+        titulo=titulo,
+        descricao=descricao or '',
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+        local=local or '',
+        usuario_id=current_user.id
+    )
+    db.session.add(novo_evento)
+    db.session.commit()
+
+    flash('Evento criado com sucesso!', 'success')
+    return redirect(url_for('agenda'))
+
+@app.route('/deletar_evento/<int:id>', methods=['POST'])
+@login_required
+def deletar_evento(id):
+    evento = Evento.query.get(id)
+    if evento and evento.usuario_id == current_user.id:
+        db.session.delete(evento)
+        db.session.commit()
+        flash('Evento deletado com sucesso!', 'success')
+    else:
+        flash('Evento não encontrado ou você não tem permissão para deletar!', 'error')
+
+    return redirect(url_for('agenda'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)

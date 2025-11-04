@@ -2,668 +2,238 @@
 
 {% block title %}Agenda - Gerenciador de Tarefas Escolares{% endblock %}
 
+{% block head_extra %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+<style>
+    #calendar {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    .fc-event {
+        cursor: pointer;
+    }
+    .fc-event:hover {
+        opacity: 0.8;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 500px;
+        border-radius: 8px;
+    }
+    .dark .modal-content {
+        background-color: #1f2937;
+        color: #f3f4f6;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Agenda</h1>
-        <div class="flex space-x-4">
-            <button id="btn-mes-anterior" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
-                ← Mês Anterior
-            </button>
-            <h2 id="mes-ano" class="text-xl font-semibold text-gray-700 dark:text-gray-300 min-w-[200px] text-center">
-                Carregando...
-            </h2>
-            <button id="btn-proximo-mes" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
-                Próximo Mês →
-            </button>
-        </div>
-        <button id="btn-novo-evento" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
-            + Novo Evento
-        </button>
-    </div>
-
-    <!-- Filtros e Visualizações -->
+<div class="max-w-7xl mx-auto">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-        <div class="flex flex-wrap gap-4 items-center justify-between">
-            <div class="flex flex-wrap gap-4">
-                <div class="flex items-center">
-                    <input type="checkbox" id="mostrar-tarefas" class="mr-2" checked>
-                    <label for="mostrar-tarefas" class="text-sm text-gray-700 dark:text-gray-300">Mostrar Tarefas</label>
-                </div>
-                <div class="flex items-center">
-                    <input type="checkbox" id="mostrar-eventos" class="mr-2" checked>
-                    <label for="mostrar-eventos" class="text-sm text-gray-700 dark:text-gray-300">Mostrar Eventos</label>
-                </div>
-                <div class="flex items-center">
-                    <input type="checkbox" id="mostrar-recorrentes" class="mr-2" checked>
-                    <label for="mostrar-recorrentes" class="text-sm text-gray-700 dark:text-gray-300">Eventos Recorrentes</label>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <select id="visualizacao" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                    <option value="mes">Visualização Mensal</option>
-                    <option value="semana">Visualização Semanal</option>
-                    <option value="lista">Lista de Eventos</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <!-- Calendário Mensal -->
-    <div id="calendario-mensal" class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-        <!-- Cabeçalho dos dias da semana -->
-        <div class="grid grid-cols-7 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-            <div class="p-4 text-center font-semibold text-gray-700 dark:text-gray-300">Dom</div>
-            <div class="p-4 text-center font-semibold text-gray-700 dark:text-gray-300">Seg</div>
-            <div class="p-4 text-center font-semibold text-gray-700 dark:text-gray-300">Ter</div>
-            <div class="p-4 text-center font-semibold text-gray-700 dark:text-gray-300">Qua</div>
-            <div class="p-4 text-center font-semibold text-gray-700 dark:text-gray-300">Qui</div>
-            <div class="p-4 text-center font-semibold text-gray-700 dark:text-gray-300">Sex</div>
-            <div class="p-4 text-center font-semibold text-gray-700 dark:text-gray-300">Sáb</div>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Minha Agenda</h1>
+            <button onclick="abrirModalEvento()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Novo Evento
+            </button>
         </div>
 
-        <!-- Dias do mês -->
-        <div id="dias-mes" class="grid grid-cols-7 min-h-[600px]">
-            <!-- Dias serão inseridos via JavaScript -->
-        </div>
-    </div>
-
-    <!-- Visualização Semanal -->
-    <div id="calendario-semanal" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <div class="grid grid-cols-7 gap-4">
-            <div class="text-center font-semibold text-gray-700 dark:text-gray-300 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>Domingo</div>
-                <div id="data-domingo" class="text-sm text-gray-500 dark:text-gray-400 mt-2"></div>
-            </div>
-            <div class="text-center font-semibold text-gray-700 dark:text-gray-300 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>Segunda</div>
-                <div id="data-segunda" class="text-sm text-gray-500 dark:text-gray-400 mt-2"></div>
-            </div>
-            <div class="text-center font-semibold text-gray-700 dark:text-gray-300 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>Terça</div>
-                <div id="data-terca" class="text-sm text-gray-500 dark:text-gray-400 mt-2"></div>
-            </div>
-            <div class="text-center font-semibold text-gray-700 dark:text-gray-300 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>Quarta</div>
-                <div id="data-quarta" class="text-sm text-gray-500 dark:text-gray-400 mt-2"></div>
-            </div>
-            <div class="text-center font-semibold text-gray-700 dark:text-gray-300 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>Quinta</div>
-                <div id="data-quinta" class="text-sm text-gray-500 dark:text-gray-400 mt-2"></div>
-            </div>
-            <div class="text-center font-semibold text-gray-700 dark:text-gray-300 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>Sexta</div>
-                <div id="data-sexta" class="text-sm text-gray-500 dark:text-gray-400 mt-2"></div>
-            </div>
-            <div class="text-center font-semibold text-gray-700 dark:text-gray-300 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>Sábado</div>
-                <div id="data-sabado" class="text-sm text-gray-500 dark:text-gray-400 mt-2"></div>
-            </div>
-        </div>
-
-        <!-- Eventos da semana -->
-        <div id="eventos-semana" class="mt-6 space-y-4">
-            <!-- Eventos serão inseridos via JavaScript -->
-        </div>
-    </div>
-
-    <!-- Lista de Eventos -->
-    <div id="lista-eventos" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <div class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Próximos Eventos</h3>
-                <div class="flex gap-2">
-                    <input type="text" id="busca-eventos" placeholder="Buscar eventos..." class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                </div>
-            </div>
-            <div id="lista-eventos-conteudo">
-                <!-- Eventos serão inseridos via JavaScript -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Novo Evento -->
-    <div id="modal-evento" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-        <div class="flex justify-center items-center min-h-screen p-4">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Novo Evento</h2>
-                        <button id="btn-fechar-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <form id="form-evento">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Título *
-                                </label>
-                                <input type="text" id="titulo-evento" name="titulo" required
-                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Local
-                                </label>
-                                <input type="text" id="local-evento" name="local"
-                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Descrição
-                            </label>
-                            <textarea id="descricao-evento" name="descricao" rows="3"
-                                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Data de Início *
-                                </label>
-                                <input type="datetime-local" id="data-inicio-evento" name="data_inicio" required
-                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Data de Fim
-                                </label>
-                                <input type="datetime-local" id="data-fim-evento" name="data_fim"
-                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Cor do Evento
-                            </label>
-                            <div class="flex gap-2">
-                                <button type="button" class="w-8 h-8 rounded-full bg-blue-500 border-2 border-blue-600" data-cor="#3b82f6"></button>
-                                <button type="button" class="w-8 h-8 rounded-full bg-green-500 border-2 border-gray-300" data-cor="#10b981"></button>
-                                <button type="button" class="w-8 h-8 rounded-full bg-red-500 border-2 border-gray-300" data-cor="#ef4444"></button>
-                                <button type="button" class="w-8 h-8 rounded-full bg-yellow-500 border-2 border-gray-300" data-cor="#f59e0b"></button>
-                                <button type="button" class="w-8 h-8 rounded-full bg-purple-500 border-2 border-gray-300" data-cor="#8b5cf6"></button>
-                                <button type="button" class="w-8 h-8 rounded-full bg-pink-500 border-2 border-gray-300" data-cor="#ec4899"></button>
-                                <input type="color" id="cor-personalizada" class="w-8 h-8 border border-gray-300 rounded cursor-pointer">
-                            </div>
-                        </div>
-
-                        <div class="mt-6">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recorrência</h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Tipo de Recorrência
-                                    </label>
-                                    <select id="tipo-recorrencia" name="tipo_recorrencia"
-                                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                        <option value="nenhum">Não recorrente</option>
-                                        <option value="diario">Diário</option>
-                                        <option value="semanal">Semanal</option>
-                                        <option value="mensal">Mensal</option>
-                                    </select>
-                                </div>
-
-                                <div id="config-recorrencia" class="hidden">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                A cada
-                                            </label>
-                                            <input type="number" id="intervalo-recorrencia" name="intervalo_recorrencia" min="1" value="1"
-                                                   class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                        </div>
-
-                                        <div id="campo-dias-semana" class="hidden">
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                Dias da Semana
-                                            </label>
-                                            <div class="flex gap-2">
-                                                <label class="flex items-center">
-                                                    <input type="checkbox" name="dias_semana" value="1" class="mr-1"> D
-                                                </label>
-                                                <label class="flex items-center">
-                                                    <input type="checkbox" name="dias_semana" value="2" class="mr-1"> S
-                                                </label>
-                                                <label class="flex items-center">
-                                                    <input type="checkbox" name="dias_semana" value="3" class="mr-1"> T
-                                                </label>
-                                                <label class="flex items-center">
-                                                    <input type="checkbox" name="dias_semana" value="4" class="mr-1"> Q
-                                                </label>
-                                                <label class="flex items-center">
-                                                    <input type="checkbox" name="dias_semana" value="5" class="mr-1"> Q
-                                                </label>
-                                                <label class="flex items-center">
-                                                    <input type="checkbox" name="dias_semana" value="6" class="mr-1"> S
-                                                </label>
-                                                <label class="flex items-center">
-                                                    <input type="checkbox" name="dias_semana" value="0" class="mr-1"> S
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-4">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Termina em (opcional)
-                                        </label>
-                                        <input type="date" id="data-fim-recorrencia" name="data_fim_recorrencia"
-                                               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 flex justify-end space-x-4">
-                            <button type="button" id="btn-cancelar-evento"
-                                    class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
-                                Cancelar
-                            </button>
-                            <button type="submit"
-                                    class="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors">
-                                Salvar Evento
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+        <!-- Calendário -->
+        <div id='calendar'></div>
     </div>
 </div>
 
-{% endblock %}
-
-{% block scripts %}
-<script>
-class AgendaManager {
-    constructor() {
-        this.dataAtual = new Date();
-        this.eventos = [];
-        this.tarefas = [];
-        this.visualizacaoAtual = 'mes';
-        this.init();
-    }
-
-    init() {
-        this.carregarDados();
-        this.configurarEventListeners();
-        this.atualizarCalendario();
-    }
-
-    configurarEventListeners() {
-        // Navegação do calendário
-        document.getElementById('btn-mes-anterior').addEventListener('click', () => {
-            this.dataAtual.setMonth(this.dataAtual.getMonth() - 1);
-            this.atualizarCalendario();
-        });
-
-        document.getElementById('btn-proximo-mes').addEventListener('click', () => {
-            this.dataAtual.setMonth(this.dataAtual.getMonth() + 1);
-            this.atualizarCalendario();
-        });
-
-        // Novo evento
-        document.getElementById('btn-novo-evento').addEventListener('click', () => {
-            this.abrirModalEvento();
-        });
-
-        // Filtros
-        document.getElementById('mostrar-tarefas').addEventListener('change', () => {
-            this.atualizarCalendario();
-        });
-
-        document.getElementById('mostrar-eventos').addEventListener('change', () => {
-            this.atualizarCalendario();
-        });
-
-        document.getElementById('mostrar-recorrentes').addEventListener('change', () => {
-            this.atualizarCalendario();
-        });
-
-        // Visualização
-        document.getElementById('visualizacao').addEventListener('change', (e) => {
-            this.alterarVisualizacao(e.target.value);
-        });
-
-        // Modal
-        document.getElementById('btn-fechar-modal').addEventListener('click', () => {
-            this.fecharModalEvento();
-        });
-
-        document.getElementById('btn-cancelar-evento').addEventListener('click', () => {
-            this.fecharModalEvento();
-        });
-
-        // Formulário de evento
-        document.getElementById('form-evento').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.salvarEvento();
-        });
-
-        // Tipo de recorrência
-        document.getElementById('tipo-recorrencia').addEventListener('change', (e) => {
-            this.configurarRecorrencia(e.target.value);
-        });
-
-        // Cores
-        document.querySelectorAll('[data-cor]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.selecionarCor(btn.dataset.cor);
-            });
-        });
-    }
-
-    async carregarDados() {
-        try {
-            // Carregar eventos
-            const responseEventos = await fetch('/agenda/api/eventos');
-            if (responseEventos.ok) {
-                this.eventos = await responseEventos.json();
-            }
-
-            // Carregar tarefas
-            const responseTarefas = await fetch('/agenda/api/tarefas');
-            if (responseTarefas.ok) {
-                this.tarefas = await responseTarefas.json();
-            }
-        } catch (error) {
-            console.error('Erro ao carregar dados:', error);
-        }
-    }
-
-    atualizarCalendario() {
-        const mes = this.dataAtual.getMonth();
-        const ano = this.dataAtual.getFullYear();
-
-        document.getElementById('mes-ano').textContent =
-            new Date(ano, mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-
-        if (this.visualizacaoAtual === 'mes') {
-            this.renderizarCalendarioMensal();
-        } else if (this.visualizacaoAtual === 'semana') {
-            this.renderizarCalendarioSemanal();
-        } else if (this.visualizacaoAtual === 'lista') {
-            this.renderizarListaEventos();
-        }
-    }
-
-    renderizarCalendarioMensal() {
-        const mes = this.dataAtual.getMonth();
-        const ano = this.dataAtual.getFullYear();
-        const primeiroDia = new Date(ano, mes, 1);
-        const ultimoDia = new Date(ano, mes + 1, 0);
-        const diaSemanaInicio = primeiroDia.getDay();
-        const totalDias = ultimoDia.getDate();
-
-        let html = '';
-
-        // Dias vazios antes do primeiro dia
-        for (let i = 0; i < diaSemanaInicio; i++) {
-            html += '<div class="p-4 border border-gray-200 dark:border-gray-600"></div>';
-        }
-
-        // Dias do mês
-        for (let dia = 1; dia <= totalDias; dia++) {
-            const dataAtual = new Date(ano, mes, dia);
-            const eventosDoDia = this.getEventosDoDia(dataAtual);
-            const tarefasDoDia = this.getTarefasDoDia(dataAtual);
-
-            let eventosHtml = '';
-            if (eventosDoDia.length > 0) {
-                eventosHtml = `<div class="mt-2 space-y-1">
-                    ${eventosDoDia.slice(0, 3).map(evento => `
-                        <div class="text-xs p-1 rounded text-white truncate" style="background-color: ${evento.cor}">
-                            ${evento.titulo}
-                        </div>
-                    `).join('')}
-                    ${eventosDoDia.length > 3 ? `<div class="text-xs text-gray-500">+${eventosDoDia.length - 3} mais</div>` : ''}
-                </div>`;
-            }
-
-            let tarefasHtml = '';
-            if (tarefasDoDia.length > 0) {
-                tarefasHtml = `<div class="mt-2 space-y-1">
-                    ${tarefasDoDia.slice(0, 2).map(tarefa => `
-                        <div class="text-xs p-1 rounded truncate ${tarefa.concluida ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}">
-                            ${tarefa.descricao}
-                        </div>
-                    `).join('')}
-                    ${tarefasDoDia.length > 2 ? `<div class="text-xs text-gray-500">+${tarefasDoDia.length - 2} mais</div>` : ''}
-                </div>`;
-            }
-
-            const hoje = new Date();
-            const ehHoje = dataAtual.toDateString() === hoje.toDateString();
-
-            html += `
-                <div class="p-4 border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${ehHoje ? 'bg-blue-50 dark:bg-blue-900/20' : ''}"
-                     onclick="agendaManager.abrirDia(${dia})">
-                    <div class="font-semibold text-gray-900 dark:text-white">${dia}</div>
-                    ${eventosHtml}
-                    ${tarefasHtml}
+<!-- Modal para criar evento -->
+<div id="modal-evento" class="modal">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Criar Novo Evento</h2>
+            <button onclick="fecharModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form id="evento-form" method="POST" action="{{ url_for('criar_evento') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="titulo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Título *</label>
+                    <input type="text" id="titulo" name="titulo" required
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:text-white">
                 </div>
-            `;
-        }
+                <div>
+                    <label for="data_inicio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Data e Hora de Início *</label>
+                    <input type="datetime-local" id="data_inicio" name="data_inicio" required
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:text-white">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="data_fim" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Data e Hora de Fim</label>
+                    <input type="datetime-local" id="data_fim" name="data_fim"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:text-white">
+                </div>
+                <div>
+                    <label for="local" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Local</label>
+                    <input type="text" id="local" name="local"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:text-white">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="descricao" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Descrição</label>
+                <textarea id="descricao" name="descricao" rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:text-white"></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="fecharModal()" class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Criar Evento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
-        document.getElementById('dias-mes').innerHTML = html;
+<!-- Modal para visualizar evento -->
+<div id="modal-visualizar" class="modal">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h2 id="evento-titulo" class="text-xl font-semibold"></h2>
+            <div class="flex space-x-2">
+                <button onclick="deletarEvento()" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+                <button onclick="fecharModalVisualizar()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="evento-detalhes"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'pt-br',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        buttonText: {
+            today: 'Hoje',
+            month: 'Mês',
+            week: 'Semana',
+            day: 'Dia'
+        },
+        events: {{ eventos_json|safe }},
+        eventClick: function(info) {
+            mostrarEvento(info.event);
+        },
+        dateClick: function(info) {
+            // Preencher data no formulário quando clicar em uma data
+            document.getElementById('data_inicio').value = info.dateStr + 'T09:00';
+            abrirModalEvento();
+        },
+        height: 'auto',
+        dayMaxEvents: true,
+        moreLinkClick: 'popover'
+    });
+    calendar.render();
+});
+
+function abrirModalEvento() {
+    document.getElementById('modal-evento').style.display = 'block';
+    document.getElementById('titulo').focus();
+}
+
+function fecharModal() {
+    document.getElementById('modal-evento').style.display = 'none';
+    document.getElementById('evento-form').reset();
+}
+
+function mostrarEvento(event) {
+    document.getElementById('evento-titulo').textContent = event.title;
+
+    var detalhes = '<div class="space-y-2">';
+    detalhes += '<p><strong>Data de início:</strong> ' + event.start.toLocaleString('pt-BR') + '</p>';
+    if (event.end) {
+        detalhes += '<p><strong>Data de fim:</strong> ' + event.end.toLocaleString('pt-BR') + '</p>';
     }
-
-    getEventosDoDia(data) {
-        const mostrarEventos = document.getElementById('mostrar-eventos').checked;
-        const mostrarRecorrentes = document.getElementById('mostrar-recorrentes').checked;
-
-        if (!mostrarEventos) return [];
-
-        let eventosDoDia = [];
-
-        this.eventos.forEach(evento => {
-            if (evento.tipo_recorrencia === 'nenhum') {
-                // Evento único
-                if (evento.data_inicio.startsWith(data.toISOString().split('T')[0])) {
-                    eventosDoDia.push(evento);
-                }
-            } else if (mostrarRecorrentes) {
-                // Evento recorrente
-                const ocorrencias = this.gerarOcorrenciasRecorrentes(evento, data.getFullYear());
-                const dataFormatada = data.toISOString().split('T')[0];
-                if (ocorrencias.some(oc => oc.data.startsWith(dataFormatada))) {
-                    eventosDoDia.push({
-                        ...evento,
-                        titulo: evento.titulo,
-                        cor: evento.cor
-                    });
-                }
-            }
-        });
-
-        return eventosDoDia.sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio));
+    if (event.extendedProps.local) {
+        detalhes += '<p><strong>Local:</strong> ' + event.extendedProps.local + '</p>';
     }
-
-    getTarefasDoDia(data) {
-        if (!document.getElementById('mostrar-tarefas').checked) return [];
-
-        return this.tarefas.filter(tarefa => {
-            if (!tarefa.data_vencimento) return false;
-            const dataVencimento = new Date(tarefa.data_vencimento);
-            return dataVencimento.toDateString() === data.toDateString();
-        });
+    if (event.extendedProps.descricao) {
+        detalhes += '<p><strong>Descrição:</strong> ' + event.extendedProps.descricao + '</p>';
     }
+    detalhes += '</div>';
 
-    gerarOcorrenciasRecorrentes(evento, ano) {
-        // Implementação simplificada da geração de ocorrências recorrentes
-        const ocorrencias = [];
-        const dataInicio = new Date(evento.data_inicio);
+    document.getElementById('evento-detalhes').innerHTML = detalhes;
+    document.getElementById('modal-visualizar').style.display = 'block';
 
-        if (evento.tipo_recorrencia === 'semanal') {
-            const diasSemana = evento.dias_semana ? evento.dias_semana.split(',').map(Number) : [dataInicio.getDay()];
-            const inicioAno = new Date(ano, 0, 1);
-            const fimAno = new Date(ano + 1, 0, 1);
+    // Armazenar ID do evento para edição/deleção
+    window.eventoAtual = event;
+}
 
-            for (let data = new Date(inicioAno); data < fimAno; data.setDate(data.getDate() + 1)) {
-                if (diasSemana.includes(data.getDay())) {
-                    ocorrencias.push({
-                        data: data.toISOString(),
-                        titulo: evento.titulo,
-                        descricao: evento.descricao,
-                        cor: evento.cor
-                    });
-                }
-            }
-        }
+function fecharModalVisualizar() {
+    document.getElementById('modal-visualizar').style.display = 'none';
+}
 
-        return ocorrencias;
-    }
+function deletarEvento() {
+    if (confirm('Tem certeza que deseja deletar este evento?')) {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/deletar_evento/' + window.eventoAtual.id;
 
-    alterarVisualizacao(visualizacao) {
-        this.visualizacaoAtual = visualizacao;
+        var csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
 
-        // Ocultar todas as visualizações
-        document.getElementById('calendario-mensal').classList.add('hidden');
-        document.getElementById('calendario-semanal').classList.add('hidden');
-        document.getElementById('lista-eventos').classList.add('hidden');
-
-        // Mostrar a visualização selecionada
-        document.getElementById(`calendario-${visualizacao}`).classList.remove('hidden');
-
-        this.atualizarCalendario();
-    }
-
-    abrirModalEvento(evento = null) {
-        const modal = document.getElementById('modal-evento');
-        const titulo = document.getElementById('titulo-evento');
-        const local = document.getElementById('local-evento');
-        const descricao = document.getElementById('descricao-evento');
-        const dataInicio = document.getElementById('data-inicio-evento');
-        const dataFim = document.getElementById('data-fim-evento');
-
-        if (evento) {
-            titulo.value = evento.titulo;
-            local.value = evento.local || '';
-            descricao.value = evento.descricao || '';
-            dataInicio.value = evento.data_inicio.substring(0, 16);
-            dataFim.value = evento.data_fim ? evento.data_fim.substring(0, 16) : '';
-            this.selecionarCor(evento.cor);
-        } else {
-            titulo.value = '';
-            local.value = '';
-            descricao.value = '';
-            dataInicio.value = '';
-            dataFim.value = '';
-            this.selecionarCor('#3b82f6');
-        }
-
-        modal.classList.remove('hidden');
-    }
-
-    fecharModalEvento() {
-        document.getElementById('modal-evento').classList.add('hidden');
-        document.getElementById('form-evento').reset();
-    }
-
-    selecionarCor(cor) {
-        // Remover seleção anterior
-        document.querySelectorAll('[data-cor]').forEach(btn => {
-            btn.classList.remove('border-blue-600');
-            btn.classList.add('border-gray-300');
-        });
-
-        // Selecionar nova cor
-        const botaoSelecionado = document.querySelector(`[data-cor="${cor}"]`);
-        if (botaoSelecionado) {
-            botaoSelecionado.classList.remove('border-gray-300');
-            botaoSelecionado.classList.add('border-blue-600');
-        }
-    }
-
-    configurarRecorrencia(tipo) {
-        const configRecorrencia = document.getElementById('config-recorrencia');
-        const campoDiasSemana = document.getElementById('campo-dias-semana');
-
-        if (tipo === 'nenhum') {
-            configRecorrencia.classList.add('hidden');
-        } else {
-            configRecorrencia.classList.remove('hidden');
-
-            if (tipo === 'semanal') {
-                campoDiasSemana.classList.remove('hidden');
-            } else {
-                campoDiasSemana.classList.add('hidden');
-            }
-        }
-    }
-
-    async salvarEvento() {
-        const formData = new FormData(document.getElementById('form-evento'));
-        const eventoData = {
-            titulo: formData.get('titulo'),
-            local: formData.get('local'),
-            descricao: formData.get('descricao'),
-            data_inicio: formData.get('data_inicio'),
-            data_fim: formData.get('data_fim') || null,
-            tipo_recorrencia: formData.get('tipo_recorrencia'),
-            intervalo_recorrencia: formData.get('intervalo_recorrencia') || 1,
-            dias_semana: formData.getAll('dias_semana').join(',') || null,
-            data_fim_recorrencia: formData.get('data_fim_recorrencia') || null,
-            cor: this.getCorSelecionada()
-        };
-
-        try {
-            const response = await fetch('/agenda/evento/novo', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(eventoData)
-            });
-
-            if (response.ok) {
-                this.fecharModalEvento();
-                await this.carregarDados();
-                this.atualizarCalendario();
-                alert('Evento salvo com sucesso!');
-            } else {
-                alert('Erro ao salvar evento. Tente novamente.');
-            }
-        } catch (error) {
-            console.error('Erro ao salvar evento:', error);
-            alert('Erro ao salvar evento. Tente novamente.');
-        }
-    }
-
-    getCorSelecionada() {
-        const botaoSelecionado = document.querySelector('[data-cor].border-blue-600');
-        return botaoSelecionado ? botaoSelecionado.dataset.cor : '#3b82f6';
-    }
-
-    abrirDia(dia) {
-        const mes = this.dataAtual.getMonth();
-        const ano = this.dataAtual.getFullYear();
-        const dataSelecionada = new Date(ano, mes, dia);
-
-        // Abrir modal com eventos do dia
-        const eventosDoDia = this.getEventosDoDia(dataSelecionada);
-        const tarefasDoDia = this.getTarefasDoDia(dataSelecionada);
-
-        if (eventosDoDia.length > 0 || tarefasDoDia.length > 0) {
-            // Mostrar detalhes do dia
-            console.log('Eventos do dia:', eventosDoDia);
-            console.log('Tarefas do dia:', tarefasDoDia);
-        }
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 
-// Inicializar quando a página carregar
-document.addEventListener('DOMContentLoaded', () => {
-    window.agendaManager = new AgendaManager();
-});
+// Fechar modais ao clicar fora
+window.onclick = function(event) {
+    var modalEvento = document.getElementById('modal-evento');
+    var modalVisualizar = document.getElementById('modal-visualizar');
+
+    if (event.target == modalEvento) {
+        fecharModal();
+    }
+    if (event.target == modalVisualizar) {
+        fecharModalVisualizar();
+    }
+}
 </script>
 {% endblock %}
